@@ -224,7 +224,7 @@ var adjustWidgetToAllowResizingInEditor = CC_EDITOR && function (event) {
 var widgetManager = cc._widgetManager = {
     isAligning: false,
     init: function (director) {
-        director.on(cc.Director.EVENT_BEFORE_VISIT, refreshScene);
+        //director.on(cc.Director.EVENT_BEFORE_VISIT, refreshScene);
     },
     add: function (widget) {
         widget.node._widget = widget;
