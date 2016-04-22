@@ -919,7 +919,8 @@ var BaseNode = cc.Class(/** @lends cc.Node# */{
             return;
         }
 
-        var oldPosition = new cc.Vec2(locPosition);
+        // BREAK layout
+        //var oldPosition = new cc.Vec2(locPosition);
 
         if (!CC_EDITOR || isFinite(xValue)) {
             locPosition.x = xValue;
@@ -936,9 +937,10 @@ var BaseNode = cc.Class(/** @lends cc.Node# */{
 
         this._sgNode.setPosition(xValue, yValue);
 
-        if (this.emit) {
-            this.emit(POSITION_CHANGED, oldPosition);
-        }
+        // BREAK layout
+        //if (this.emit) {
+        //    this.emit(POSITION_CHANGED, oldPosition);
+        //}
     },
 
     /**
