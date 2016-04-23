@@ -1064,24 +1064,24 @@ var BaseNode = cc.Class(/** @lends cc.Node# */{
      */
     setContentSize: function (size, height) {
         var locContentSize = this._contentSize;
-        var clone;
+        //var clone;
         if (height === undefined) {
             if ((size.width === locContentSize.width) && (size.height === locContentSize.height))
                 return;
-            clone = cc.size(locContentSize);
+            //clone = cc.size(locContentSize);
             locContentSize.width = size.width;
             locContentSize.height = size.height;
         } else {
             if ((size === locContentSize.width) && (height === locContentSize.height))
                 return;
-            clone = cc.size(locContentSize);
+            //clone = cc.size(locContentSize);
             locContentSize.width = size;
             locContentSize.height = height;
         }
         if (this._sizeProvider) {
             this._sizeProvider.setContentSize(locContentSize);
         }
-        this.emit(SIZE_CHANGED, clone);
+        //this.emit(SIZE_CHANGED, clone);
     },
 
     /**
