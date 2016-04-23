@@ -49,10 +49,9 @@ var RendererInSG = cc.Class({
         else if (CC_EDITOR) {
             cc.error('Not support for asynchronous creating node in SG');
         }
-        
-        // The replacement node used when this component disabled 
-        this._plainNode = new _ccsg.Node();
-        this._plainNode.retain();
+
+        // The replacement node used when this component disabled
+        this._plainNode = null;
     },
 
     onLoad: function () {
@@ -75,6 +74,8 @@ var RendererInSG = cc.Class({
     },
 
     onDisable: function () {
+        this._plainNode = new _ccsg.Node();
+        this._plainNode.retain();
         this._replaceSgNode(this._plainNode);
         //this.node._ignoreAnchor = false;
     },
@@ -82,7 +83,7 @@ var RendererInSG = cc.Class({
     onDestroy: function () {
         this._removeSgNode();
         var releasedByNode = this.node._sgNode;
-        if (this._plainNode !== releasedByNode) {
+        if (this._plainNode && this._plainNode !== releasedByNode) {
             this._plainNode.release();
         }
     },
@@ -126,6 +127,9 @@ var RendererInSG = cc.Class({
 
         // apply node's property
 
+        if (replaced !== this._plainNode && replaced !== this._sgNode) {
+            replaced.release();
+        }
         node._sgNode = sgNode;
         node._updateSgNode();
     },

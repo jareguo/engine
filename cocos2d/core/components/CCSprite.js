@@ -113,7 +113,7 @@ var SizeMode = cc.Enum({
  */
 var Sprite = cc.Class({
     name: 'cc.Sprite',
-    extends: require('./CCRendererUnderSG'),
+    extends: require('./CCRendererInSG'),
 
     editor: CC_EDITOR && {
         menu: 'i18n:MAIN_MENU.component.renderers/Sprite',
@@ -505,6 +505,7 @@ var Sprite = cc.Class({
     },
 
     onEnable: function () {
+        this._super();
         if (this._sgNode) {
             if (this._spriteFrame && this._spriteFrame.textureLoaded()) {
                 this._sgNode.setVisible(true);
