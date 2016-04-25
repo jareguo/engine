@@ -146,7 +146,7 @@ var BaseNode = cc.Class(/** @lends cc.Node# */{
                     parent.addChild(node);
                     setMaxZOrder(node);
                     value._children.push(this);
-                    value.emit(CHILD_ADDED, this);
+                    //value.emit(CHILD_ADDED, this);
                 }
                 //
                 var oldParent = this._parent;
@@ -158,7 +158,7 @@ var BaseNode = cc.Class(/** @lends cc.Node# */{
                             return cc.error('Internal error, should not remove unknown node from parent.');
                         }
                         oldParent._children.splice(removeAt, 1);
-                        oldParent.emit(CHILD_REMOVED, this);
+                        //oldParent.emit(CHILD_REMOVED, this);
                         this._onHierarchyChanged(oldParent);
                     }
                 }
