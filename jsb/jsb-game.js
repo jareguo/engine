@@ -281,7 +281,7 @@ cc.game = {
                 var txt = jsb.fileUtils.getStringFromFile('project.json');
                 var data = JSON.parse(txt);
                 this._initConfig(data || {});
-            } catch (e) {
+            } catch {
                 console.log('Failed to read or parse project.json');
                 this._initConfig({});
             }

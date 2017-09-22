@@ -192,7 +192,7 @@ Audio.State = {
         if (!this._element) return;
         try {
             this._element.currentTime = 0;
-        } catch (error) {}
+        } catch {}
         this._element.pause();
         // remove touchPlayList
         for (var i=0; i<touchPlayList.length; i++) {
@@ -230,7 +230,7 @@ Audio.State = {
         }.bind(this));
         try {
             this._element.currentTime = num;
-        } catch (err) {
+        } catch {
             var _element = this._element;
             if (_element.addEventListener) {
                 var func = function () {

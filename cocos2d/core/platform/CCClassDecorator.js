@@ -115,7 +115,7 @@ function getDefaultFromInitializer (initializer) {
     try {
         value = initializer();
     }
-    catch (e) {
+    catch {
         // just lazy initialize by CCClass
         return initializer;
     }

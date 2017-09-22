@@ -31,7 +31,7 @@ cc.Codec.unzipBase64 = function () {
     try {
         return cc.Codec.GZip.gunzip.call(cc.Codec.GZip, buffer);
     }
-    catch(e) {
+    catch {
         // if not zipped, just skip
         return buffer.slice(7); // get image data
     }

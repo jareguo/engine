@@ -304,7 +304,7 @@ if (CC_DEV) {
                 try {
                     js.getset(owner, prop, accessor.bind(null, getset[0]), getset[1] && accessor.bind(null, getset[1]));
                 }
-                catch (e) {}
+                catch {}
             }
             var getset = obj[prop];
             if (prop[0] === '*') {

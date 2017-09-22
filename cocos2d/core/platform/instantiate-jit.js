@@ -146,7 +146,7 @@ function equalsToDefault (def, value) {
         try {
             def = def();
         }
-        catch (e) {
+        catch {
             return false;
         }
     }
@@ -163,7 +163,7 @@ function equalsToDefault (def, value) {
             try {
                 return JSON.stringify(def) === JSON.stringify(value);
             }
-            catch (e) {
+            catch {
             }
         }
     }
@@ -270,7 +270,7 @@ proto.getFuncModule = function (func, usedInNew) {
                         return clsName;
                     }
                 }
-                catch (e) {}
+                catch {}
             }
         }
     }

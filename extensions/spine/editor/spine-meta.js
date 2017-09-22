@@ -126,7 +126,7 @@ class SpineMeta extends CustomAssetMeta {
             try {
                 json = JSON.parse(text);
             }
-            catch (e) {
+            catch {
                 return false;
             }
             return Array.isArray(json.bones);

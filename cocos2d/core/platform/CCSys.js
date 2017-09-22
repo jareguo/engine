@@ -650,7 +650,7 @@ else {
         if (opt_contextType) {
             try {
                 return canvas.getContext(opt_contextType, opt_attribs);
-            } catch (e) {
+            } catch {
                 return null;
             }
         }
@@ -703,7 +703,7 @@ else {
         localStorage.setItem("storage", "");
         localStorage.removeItem("storage");
         localStorage = null;
-    } catch (e) {
+    } catch {
         var warn = function () {
             cc.warnID(5200);
         };
@@ -849,7 +849,7 @@ else {
                 setTimeout(function(){ __audioSupport.context = new (window.AudioContext || window.webkitAudioContext || window.mozAudioContext)(); }, 0);
             }
         }
-    } catch(error) {
+    } catch {
         __audioSupport.WEB_AUDIO = false;
         cc.logID(5201);
     }

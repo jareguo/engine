@@ -385,9 +385,7 @@ function normalizeClassName_DEV (className) {
             Function('function ' + className + '(){}')();
             return className;
         }
-        catch (e) {
-            ;
-        }
+        catch {}
     }
     return DefaultName;
 }

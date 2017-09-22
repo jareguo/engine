@@ -33,7 +33,7 @@ try {
         originLog(cc.js.formatStr.apply(null, args));
     };
 }
-catch (e) {
+catch {
 }
 
 function defineMacro (name, defaultValue) {

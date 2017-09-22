@@ -45,7 +45,7 @@ class DragonBonesMeta extends CustomAssetMeta {
         try {
             json = JSON.parse(text);
         }
-        catch (e) {
+        catch {
             return false;
         }
 

@@ -80,6 +80,8 @@ module.exports = function createBundler(entryFiles, options) {
         'babel-plugin-transform-es2015-template-literals',
         // http://babeljs.io/docs/plugins/transform-es2015-block-scoping/
         'babel-plugin-transform-es2015-block-scoping',
+        // https://www.npmjs.com/package/babel-plugin-transform-optional-catch-binding
+        'babel-plugin-transform-optional-catch-binding',
 
         // < 6.16.0
         [ 'babel-plugin-parser-opts', { allowReturnOutsideFunction: true } ]

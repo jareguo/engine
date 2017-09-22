@@ -628,7 +628,7 @@ if (CC_DEBUG) {
 // try {
 //     module.exports = Object.prototype.toString.call(global.process) === '[object process]';
 //     module.exports = logs;
-// } catch (e) {
+// } catch {
 
 //     cc._LogInfos = logs;
 // }
