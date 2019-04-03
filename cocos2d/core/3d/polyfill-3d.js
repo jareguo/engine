@@ -1,7 +1,7 @@
 /****************************************************************************
  Copyright (c) 2018 Xiamen Yaji Software Co., Ltd.
 
- http://www.cocos.com
+ https://www.cocos.com/
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated engine source code (the "Software"), a limited,
@@ -27,21 +27,22 @@
 const Node = require('../CCNode');
 const EventType = Node.EventType;
 const DirtyFlag = Node._LocalDirtyFlag;
-const math = require('../renderer/render-engine').math;
 const RenderFlow = require('../renderer/render-flow');
+
+import { mat4 } from '../vmath';
 
 // ====== Node transform polyfills ======
 const ONE_DEGREE = Math.PI / 180;
 
 const POSITION_ON = 1 << 0;
 const SCALE_ON = 1 << 1;
-const ROTATION_ON = 1 << 2;
+const ERR_INVALID_NUMBER = CC_EDITOR && 'The %s is invalid';
 
 function _updateLocalMatrix3d () {
     if (this._localMatDirty) {
         // Update transform
         let t = this._matrix;
-        math.mat4.fromRTS(t, this._quat, this._position, this._scale);
+        mat4.fromRTS(t, this._quat, this._position, this._scale);
 
         // skew
         if (this._skewX || this._skewY) {
@@ -71,10 +72,10 @@ function _calculWorldMatrix3d () {
 
     if (this._parent) {
         let parentMat = this._parent._worldMatrix;
-        math.mat4.mul(this._worldMatrix, parentMat, this._matrix);
+        mat4.mul(this._worldMatrix, parentMat, this._matrix);
     }
     else {
-        math.mat4.copy(this._worldMatrix, this._matrix);
+        mat4.copy(this._worldMatrix, this._matrix);
     }
     this._worldMatDirty = false;
 }
@@ -148,14 +149,18 @@ function _update3DFunction () {
     if (this._is3DNode) {
         this._updateLocalMatrix = _updateLocalMatrix3d;
         this._calculWorldMatrix = _calculWorldMatrix3d;
-        this._mulMat = cc.vmath.mat4.mul;
+        this._mulMat = mat4.mul;
     }
     else {
         this._updateLocalMatrix = _updateLocalMatrix2d;
         this._calculWorldMatrix = _calculWorldMatrix2d;
         this._mulMat = _mulMat2d;
     }
+    if (this._renderComponent && this._renderComponent._on3DNodeChanged) {
+        this._renderComponent._on3DNodeChanged();
+    }
     this._renderFlag |= RenderFlow.FLAG_TRANSFORM;
+    this._localMatDirty = DirtyFlag.ALL;
 }
 
 function _upgrade_1x_to_2x () {
@@ -172,7 +177,6 @@ const _updateLocalMatrix2d = proto._updateLocalMatrix;
 const _calculWorldMatrix2d = proto._calculWorldMatrix;
 const _upgrade_1x_to_2x_2d = proto._upgrade_1x_to_2x;
 const _mulMat2d = proto._mulMat;
-const _onBatchCreated2d = proto._onBatchCreated;
 
 proto.setPosition = setPosition;
 proto.setScale = setScale;
@@ -193,8 +197,8 @@ cc.js.getset(proto, 'is3DNode', function () {
 cc.js.getset(proto, 'scaleZ', function () {
     return this._scale.z;
 }, function (v) {
-    if (this._scale.z !== value) {
-        this._scale.z = value;
+    if (this._scale.z !== v) {
+        this._scale.z = v;
         this.setLocalDirty(DirtyFlag.SCALE);
         this._renderFlag |= RenderFlow.FLAG_TRANSFORM;
 
@@ -229,14 +233,14 @@ cc.js.getset(proto, 'eulerAngles', function () {
         return this._eulerAngles;
     }
     else {
-        return this._quat.getEulerAngles(cc.v3());
+        return this._quat.toEuler(cc.v3());
     }
 }, function (v) {
     if (CC_EDITOR) {
         this._eulerAngles.set(v);
     }
 
-    math.quat.fromEuler(this._quat, v.x, v.y, v.z);
+    this._quat.fromEuler(v);
     this.setLocalDirty(DirtyFlag.ROTATION);
     this._renderFlag |= RenderFlow.FLAG_TRANSFORM;
 });

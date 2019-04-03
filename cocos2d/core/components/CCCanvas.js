@@ -2,7 +2,7 @@
  Copyright (c) 2013-2016 Chukong Technologies Inc.
  Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
 
- http://www.cocos.com
+ https://www.cocos.com/
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated engine source code (the "Software"), a limited,
@@ -142,6 +142,7 @@ var Canvas = cc.Class({
         Canvas.instance = this;
 
         if (CC_EDITOR) {
+            cc.director.on(cc.Director.EVENT_AFTER_UPDATE, this.alignWithScreen, this);
             cc.engine.on('design-resolution-changed', this._thisOnResized);
         }
         else {
@@ -176,6 +177,7 @@ var Canvas = cc.Class({
 
     onDestroy: function () {
         if (CC_EDITOR) {
+            cc.director.off(cc.Director.EVENT_AFTER_UPDATE, this.alignWithScreen, this);
             cc.engine.off('design-resolution-changed', this._thisOnResized);
         }
         else {

@@ -2,7 +2,7 @@
  Copyright (c) 2013-2016 Chukong Technologies Inc.
  Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
 
- http://www.cocos.com
+ https://www.cocos.com/
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated engine source code (the "Software"), a limited,
@@ -177,6 +177,7 @@ function loadDepends (pipeline, item, asset, depends, callback) {
             callback(null, asset);
         }
         else {
+            if (!errors && asset.onLoad) asset.onLoad();
             callback(errors, asset);
         }
     });
@@ -269,7 +270,7 @@ function loadUuid (item, callback) {
     }
     catch (e) {
         cc.deserialize.Details.pool.put(tdInfo);
-        var err = CC_JSB ? (e + '\n' + e.stack) : e.stack;
+        var err = CC_JSB || CC_RUNTIME ? (e + '\n' + e.stack) : e.stack;
         return new Error(debug.getError(4925, item.id, err));
     }
 
@@ -285,6 +286,7 @@ function loadUuid (item, callback) {
     cc.deserialize.Details.pool.put(tdInfo);
 
     if (depends.length === 0) {
+        if (asset.onLoad) asset.onLoad();
         return callback(null, asset);
     }
     loadDepends(this.pipeline, item, asset, depends, callback);

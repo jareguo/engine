@@ -2,7 +2,7 @@
  Copyright (c) 2016 Chukong Technologies Inc.
  Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
 
- http://www.cocos.com
+ https://www.cocos.com/
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated engine source code (the "Software"), a limited,
@@ -143,14 +143,23 @@ let TiledObjectGroup = cc.Class({
         for (let i = 0, l = objects.length; i < l; i++) {
             let object = objects[i];
             object.offset = cc.v2(object.x, object.y);
-            if (cc.TiledMap.Orientation.ISO !== this._mapOrientation) {
+
+            let points = object.points || object.polylinePoints;
+            if (points) {
+                for (let pi = 0; pi < points.length; pi++) {
+                    points[pi].y *= -1;
+                }
+            }
+
+            if (cc.TiledMap.Orientation.ISO !== mapInfo.orientation) {
                 object.y = height - object.y;
             } else {
-                let posIdxX = object.offset.x / tileSize.width * 2;
-                let posIdxY = object.offset.y / tileSize.height;
+                let posIdxX = object.x / tileSize.width * 2;
+                let posIdxY = object.y / tileSize.height;
                 object.x = tileSize.width / 2 * (mapSize.width + posIdxX - posIdxY);
                 object.y = tileSize.height / 2 * (mapSize.height * 2 - posIdxX - posIdxY);
             }
+
         }
         this._objects = objects;
     }

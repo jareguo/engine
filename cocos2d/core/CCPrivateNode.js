@@ -1,7 +1,7 @@
 /****************************************************************************
  Copyright (c) 2018 Xiamen Yaji Software Co., Ltd.
 
- http://www.cocos.com
+ https://www.cocos.com/
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated engine source code (the "Software"), a limited,
@@ -27,13 +27,10 @@
 
 const Node = require('./CCNode');
 const RenderFlow = require('./renderer/render-flow');
-const math = require('./renderer/render-engine').math;
 
 const HideInHierarchy = cc.Object.Flags.HideInHierarchy;
 const LocalDirtyFlag = Node._LocalDirtyFlag;
 const POSITION_ON = 1 << 0;
-
-let _vec3_temp = math.vec3.create();
 
 /**
  * !#en

@@ -2,7 +2,7 @@
  Copyright (c) 2013-2016 Chukong Technologies Inc.
  Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
 
- http://www.cocos.com
+ https://www.cocos.com/
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated engine source code (the "Software"), a limited,
@@ -297,13 +297,13 @@ let VideoPlayer = cc.Class({
         if (url && cc.loader.md5Pipe) {
             url = cc.loader.md5Pipe.transformURL(url);
         }
-        this._impl.setURL(url);
+        this._impl.setURL(url, this._mute || this._volume === 0);
     },
 
     onLoad () {
         let impl = this._impl;
         if (impl) {
-            impl.createDomElementIfNeeded();
+            impl.createDomElementIfNeeded(this._mute || this._volume === 0);
             this._updateVideoSource();
 
             impl.seekTo(this.currentTime);

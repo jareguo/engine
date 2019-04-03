@@ -1,7 +1,7 @@
 /****************************************************************************
  Copyright (c) 2018 Xiamen Yaji Software Co., Ltd.
 
- http://www.cocos.com
+ https://www.cocos.com/
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated engine source code (the "Software"), a limited,
@@ -26,6 +26,7 @@
 const ValueType = require('./value-type');
 const js = require('../platform/js');
 const CCClass = require('../platform/CCClass');
+const quat = require('../vmath/quat');
 
 /**
  * !#en Representation of 2D vectors and points.
@@ -115,37 +116,55 @@ proto.equals = function (other) {
     return other && this.x === other.x && this.y === other.y && this.z === other.z && this.w === other.w;
 };
 
-proto.getRoll = function () {
-    var sinr = 2.0 * (this.w * this.x + this.y * this.z);
-    var cosr = 1.0 - 2.0 * (this.x * this.x + this.y * this.y);
-    return 180 * Math.atan2(sinr, cosr) / Math.PI;
-};
-
-proto.getPitch = function () {
-    var sinp = 2.0 * (this.w * this.y - this.z * this.x);
-    var pitch = sinp > 1 ? 1 : sinp;
-    pitch = sinp < -1 ? -1 : sinp;
-    pitch = 180 * Math.asin(pitch) / Math.PI;
-    return pitch;
-};
-
-proto.getYaw = function () {
-    var siny = 2.0 * (this.w * this.z + this.x * this.y);
-    var cosy = 1.0 - 2.0 * (this.y * this.y + this.z * this.z);  
-    return 180 * Math.atan2(siny, cosy) / Math.PI;
-};
-
-proto.getEulerAngles = function (out) {
-    out = out || cc.v3();
-    out.x = this.getRoll();
-    out.y = this.getPitch();
-    out.z = this.getYaw();
+/**
+ * !#en Convert quaternion to euler
+ * !#zh 转换四元数到欧拉角
+ * @method toEuler
+ * @param {Vec3} out
+ * @return {Vec3}
+ */
+proto.toEuler = function (out) {
+    quat.toEuler(out, this);
     return out;
-}
+};
 
+/**
+ * !#en Convert euler to quaternion
+ * !#zh 转换欧拉角到四元数
+ * @method fromEuler
+ * @param {Vec3} euler
+ * @return {Quat}
+ */
+proto.fromEuler = function (euler) {
+    quat.fromEuler(this, euler.x, euler.y, euler.z);
+    return this;
+};
+
+/**
+ * !#en Calculate the interpolation result between this quaternion and another one with given ratio
+ * !#zh 计算四元数的插值结果
+ * @member lerp
+ * @param {Quat} to
+ * @param {Number} ratio
+ * @param {Quat} out
+ */
 proto.lerp = function (to, ratio, out) {
     out = out || new cc.Quat();
-    cc.vmath.quat.slerp(out, this, to, ratio);
+    quat.slerp(out, this, to, ratio);
+    return out;
+};
+
+/**
+ * !#en Calculate the multiply result between this quaternion and another one
+ * !#zh 计算四元数乘积的结果
+ * @member lerp
+ * @param {Quat} to
+ * @param {Number} ratio
+ * @param {Quat} out
+ */
+proto.mul = function (other, out) {
+    out = out || new cc.Quat();
+    quat.mul(out, this, other);
     return out;
 };
 

@@ -2,7 +2,7 @@
  Copyright (c) 2016 Chukong Technologies Inc.
  Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
 
- http://www.cocos.com
+ https://www.cocos.com/
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated engine source code (the "Software"), a limited,
@@ -24,11 +24,13 @@
  THE SOFTWARE.
  ****************************************************************************/
 
+import { vec3 } from '../vmath';
+
 const ValueType = require('./value-type');
 const js = require('../platform/js');
 const CCClass = require('../platform/CCClass');
-const math = require('../renderer/render-engine').math;
 const misc = require('../utils/misc');
+const v2Proto = require('./vec2').prototype;
 
 /**
  * !#en Representation of 3D vectors and points.
@@ -157,7 +159,7 @@ proto.toString = function () {
  */
 proto.lerp = function (to, ratio, out) {
     out = out || new Vec3();
-    math.vec3.lerp(out, this, to, ratio);
+    vec3.lerp(out, this, to, ratio);
     return out;
 };
 
@@ -385,7 +387,7 @@ proto.dot = function (vector) {
  */
 proto.cross = function (vector, out) {
     out = out || new Vec3();
-    math.vec3.cross(out, this, vector)
+    vec3.cross(out, this, vector)
     return out;
 };
 
@@ -420,7 +422,7 @@ proto.magSqr = function () {
  * @chainable
  */
 proto.normalizeSelf = function () {
-    math.vec3.normalize(this, this);
+    vec3.normalize(this, this);
     return this;
 };
 
@@ -439,7 +441,7 @@ proto.normalizeSelf = function () {
  */
 proto.normalize = function (out) {
     out = out || new Vec3();
-    math.vec3.normalize(out, this);
+    vec3.normalize(out, this);
     return out;
 };
 
@@ -447,13 +449,133 @@ proto.normalize = function (out) {
  * Transforms the vec3 with a mat4. 4th vector component is implicitly '1'
  * @method transformMat4
  * @param {mat4} m matrix to transform with
- * @param {vec3} [out] the receiving vector, you can pass the same vec3 to save result to itself, if not provided, a new vec3 will be created
- * @returns {vec3} out
+ * @param {Vec3} [out] the receiving vector, you can pass the same vec3 to save result to itself, if not provided, a new vec3 will be created
+ * @returns {Vec3} out
  */
 proto.transformMat4 = function (m, out) {
     out = out || new Vec3();
-    math.vec3.transformMat4(out, this, m);
+    vec3.transformMat4(out, this, m);
 };
+
+/**
+ * !#en Get angle in radian between this and vector.
+ * !#zh 夹角的弧度。
+ * @method angle
+ * @param {Vec3} vector
+ * @return {number} from 0 to Math.PI
+ */
+proto.angle = v2Proto.angle;
+
+/**
+ * !#en Calculates the projection of the current vector over the given vector.
+ * !#zh 返回当前向量在指定 vector 向量上的投影向量。
+ * @method project
+ * @param {Vec3} vector
+ * @return {Vec3}
+ * @example
+ * var v1 = cc.v3(20, 20, 20);
+ * var v2 = cc.v3(5, 5, 5);
+ * v1.project(v2); // Vec3 {x: 20, y: 20, z: 20};
+ */
+proto.project = v2Proto.project;
+
+// Compatible with the vec2 API
+
+/**
+ * !#en Get angle in radian between this and vector with direction. <br/>
+ * In order to compatible with the vec2 API.
+ * !#zh 带方向的夹角的弧度。该方法仅用做兼容 2D 计算。
+ * @method signAngle
+ * @param {Vec3 | Vec2} vector
+ * @return {number} from -MathPI to Math.PI
+ */
+proto.signAngle = function (vector) {
+    cc.warnID(1408, 'vec3.signAngle', 'v2.1', 'cc.v2(selfVector).signAngle(vector)');
+    let vec1 = new cc.Vec2(this.x, this.y);
+    let vec2 = new cc.Vec2(vector.x, vector.y);
+    return vec1.signAngle(vec2);
+};
+
+/**
+ * !#en rotate. In order to compatible with the vec2 API.
+ * !#zh 返回旋转给定弧度后的新向量。该方法仅用做兼容 2D 计算。
+ * @method rotate
+ * @param {number} radians
+ * @param {Vec3} [out] - optional, the receiving vector, you can pass the same vec2 to save result to itself, if not provided, a new vec2 will be created
+ * @return {Vec2 | Vec3} if the 'out' value is a vec3 you will get a Vec3 return. 
+ */
+proto.rotate = function (radians, out) {
+    cc.warnID(1408, 'vec3.rotate', 'v2.1', 'cc.v2(selfVector).rotate(radians, out)');
+    return v2Proto.rotate.call(this, radians, out);
+};
+
+/**
+ * !#en rotate self. In order to compatible with the vec2 API.
+ * !#zh 按指定弧度旋转向量。该方法仅用做兼容 2D 计算。
+ * @method rotateSelf
+ * @param {number} radians
+ * @return {Vec3} returns this
+ * @chainable
+ */
+proto.rotateSelf = function (radians) {
+    cc.warnID(1408, 'vec3.rotateSelf', 'v2.1', 'cc.v2(selfVector).rotateSelf(radians)');
+    return v2Proto.rotateSelf.call(this, radians);
+};
+
+/**
+ * !#en return a Vec3 object with x = 1, y = 1, z = 1.
+ * !#zh 新 Vec3 对象。
+ * @property ONE
+ * @type Vec3
+ * @static
+ */
+js.get(Vec3, 'ONE', function () {
+    return new Vec3(1.0, 1.0, 1.0);
+});
+
+/**
+ * !#en return a Vec3 object with x = 0, y = 0, z = 0.
+ * !#zh 返回 x = 0，y = 0，z = 0 的 Vec3 对象。
+ * @property ZERO
+ * @type Vec3
+ * @static
+ */
+js.get(Vec3, 'ZERO', function () {
+    return new Vec3(0.0, 0.0, 0.0);
+});
+
+/**
+ * !#en return a Vec3 object with x = 0, y = 1, z = 0.
+ * !#zh 返回 x = 0, y = 1, z = 0 的 Vec3 对象。
+ * @property UP
+ * @type Vec3
+ * @static
+ */
+js.get(Vec3, 'UP', function () {
+    return new Vec3(0.0, 1.0, 0.0);
+});
+
+/**
+ * !#en return a Vec3 object with x = 1, y = 0, z = 0.
+ * !#zh 返回 x = 1，y = 0，z = 0 的 Vec3 对象。
+ * @property RIGHT
+ * @type Vec3
+ * @static
+ */
+js.get(Vec3, 'RIGHT', function () {
+    return new Vec3(1.0, 0.0, 0.0);
+});
+
+/**
+ * !#en return a Vec3 object with x = 0, y = 0, z = 1.
+ * !#zh 返回 x = 0，y = 0，z = 1 的 Vec3 对象。
+ * @property FRONT
+ * @type Vec3
+ * @static
+ */
+js.get(Vec3, 'FRONT', function () {
+    return new Vec3(0.0, 0.0, 1.0);
+});
 
 /**
  * !#en The convenience method to create a new {{#crossLink "Vec3"}}cc.Vec3{{/crossLink}}.

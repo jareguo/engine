@@ -1,7 +1,7 @@
 /****************************************************************************
  Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
 
- http://www.cocos.com
+ https://www.cocos.com/
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated engine source code (the "Software"), a limited,
@@ -26,7 +26,7 @@
 const StencilManager = require('../stencil-manager');
 const Mask = require('../../../components/CCMask');
 const RenderFlow = require('../../render-flow');
-const spriteAssembler = require('./sprite/simple');
+const spriteAssembler = require('./sprite/2d/simple');
 const graphicsAssembler = require('./graphics');
 
 let _stencilMgr = StencilManager.sharedManager;
@@ -54,14 +54,14 @@ let maskFrontAssembler = {
                 renderData.updateSizeNPivot(size.width, size.height, anchor.x, anchor.y);
                 renderData.dataLength = 4;
                 spriteAssembler.updateRenderData(mask);
-                renderData.material = mask._material;
+                renderData.material = mask.sharedMaterials[0];
             }
             else {
-                mask._material = null;
+                mask.setMaterial(0, null);
             }
         }
         else {
-            mask._graphics._material = mask._material;
+            mask._graphics.setMaterial(0, mask.sharedMaterials[0]);
             graphicsAssembler.updateRenderData(mask._graphics);
         }
     },
@@ -79,7 +79,7 @@ let maskFrontAssembler = {
 
             // vertex buffer
             renderer.node = mask.node;
-            renderer.material = mask._material;
+            renderer.material = mask.sharedMaterials[0];
             if (mask._type === Mask.Type.IMAGE_STENCIL) {
                 spriteAssembler.fillBuffers(mask, renderer);
                 renderer._flush();
@@ -95,7 +95,7 @@ let maskFrontAssembler = {
 };
 
 let maskEndAssembler = {
-    fillBuffers (mask, renderer) {
+    fillBuffers (mask) {
         // Invalid state
         if (mask._type !== Mask.Type.IMAGE_STENCIL || mask.spriteFrame) {
             // HACK: Must pop mask after batch, so we can only put this logic in fillBuffers

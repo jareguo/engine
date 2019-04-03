@@ -2,7 +2,7 @@
  Copyright (c) 2013-2016 Chukong Technologies Inc.
  Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
 
- http://www.cocos.com
+ https://www.cocos.com/
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated engine source code (the "Software"), a limited,
@@ -336,8 +336,12 @@ var Color = (function () {
      */
     proto.setA = function (alpha) {
         alpha = ~~cc.misc.clampf(alpha, 0, 255);
-        this._val = ((this._val & 0x00ffffff) | ((alpha << 24) >>> 0)) >>> 0;
+        this._val = ((this._val & 0x00ffffff) | (alpha << 24)) >>> 0;
         return this;
+    };
+
+    proto._fastSetA = function (alpha) {
+        this._val = ((this._val & 0x00ffffff) | (alpha << 24)) >>> 0;
     };
 
     js.getset(proto, 'r', proto.getR, proto.setR, true);
@@ -408,10 +412,11 @@ var Color = (function () {
      * color.toHEX("#rrggbb");  // "000000";
      */
     proto.toHEX = function ( fmt ) {
-        var hex = [
-            (this.r | 0 ).toString(16),
-            (this.g | 0 ).toString(16),
-            (this.b | 0 ).toString(16)
+        let prefix = '0';
+        let hex = [
+            (this.r < 16 ? prefix : '') + (this.r | 0).toString(16),
+            (this.g < 16 ? prefix : '') + (this.g | 0).toString(16),
+            (this.b < 16 ? prefix : '') + (this.b | 0).toString(16),
         ];
         var i = -1;
         if ( fmt === '#rgb' ) {
@@ -428,13 +433,8 @@ var Color = (function () {
                 }
             }
         }
-        else if ( fmt === '#rrggbbaa' ) {
-            hex.push((this.a | 0 ).toString(16));
-            for ( i = 0; i < hex.length; ++i ) {
-                if ( hex[i].length === 1 ) {
-                    hex[i] = '0' + hex[i];
-                }
-            }
+        else if (fmt === '#rrggbbaa') {
+            hex.push((this.a < 16 ? prefix : '') + (this.a | 0).toString(16));
         }
         return hex.join('');
     };

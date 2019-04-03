@@ -2,7 +2,7 @@
  Copyright (c) 2013-2016 Chukong Technologies Inc.
  Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
 
- http://www.cocos.com
+ https://www.cocos.com/
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated engine source code (the "Software"), a limited,
@@ -28,9 +28,9 @@ const misc = require('../utils/misc');
 const NodeEvent = require('../CCNode').EventType;
 const RenderComponent = require('./CCRenderComponent');
 const RenderFlow = require('../renderer/render-flow');
-const renderEngine = require('../renderer/render-engine');
-const SpriteMaterial = renderEngine.SpriteMaterial;
-const GraySpriteMaterial = renderEngine.GraySpriteMaterial;
+const BlendFunc = require('../utils/blend-func');
+
+const Material = require('../assets/material/CCMaterial');
 
 /**
  * !#en Enum for sprite type.
@@ -155,9 +155,9 @@ var State = cc.Enum({
 var Sprite = cc.Class({
     name: 'cc.Sprite',
     extends: RenderComponent,
+    mixins: [BlendFunc],
 
     ctor () {
-        this._assembler = null;
         this._graySpriteMaterial = null;
         this._spriteMaterial = null;
     },
@@ -466,6 +466,10 @@ var Sprite = cc.Class({
         this.markForUpdateRenderData(true);
     },
 
+    _on3DNodeChanged () {
+        this._updateAssembler();
+    },
+
     _updateAssembler: function () {
         let assembler = Sprite._assembler.getAssembler(this);
         
@@ -476,7 +480,7 @@ var Sprite = cc.Class({
 
         if (!this._renderData) {
             this._renderData = this._assembler.createData(this);
-            this._renderData.material = this._material;
+            this._renderData.material = this.sharedMaterials[0];
             this.markForUpdateRenderData(true);
         }
     },
@@ -486,37 +490,43 @@ var Sprite = cc.Class({
 
         // WebGL
         if (cc.game.renderType !== cc.game.RENDER_TYPE_CANVAS) {
-            // Get material
-            let material;
+            let material = this.sharedMaterials[0];
+            // if material is not internal material, then need do nothing
+            if (material && material!== this._graySpriteMaterial && material !== this._spriteMaterial) {
+                this.markForUpdateRenderData(true);
+                this.markForRender(true);
+                return;
+            }
+
             if (this._state === State.GRAY) {
-                if (!this._graySpriteMaterial) {
-                    this._graySpriteMaterial = new GraySpriteMaterial();
-                }
                 material = this._graySpriteMaterial;
+                if (!material) {
+                    material = this._graySpriteMaterial = Material.getInstantiatedBuiltinMaterial('gray-sprite', this);
+                }
             }
             else {
-                if (!this._spriteMaterial) {
-                    this._spriteMaterial = new SpriteMaterial();
-                }
                 material = this._spriteMaterial;
+                if (!material) {
+                    material = this._spriteMaterial = Material.getInstantiatedBuiltinMaterial('sprite', this);
+                    material.define('USE_TEXTURE', true);
+                }
             }
-            // For batch rendering, do not use uniform color.
-            material.useColor = false;
+            
             // Set texture
             if (spriteFrame && spriteFrame.textureLoaded()) {
                 let texture = spriteFrame.getTexture();
-                if (material.texture !== texture) {
-                    material.texture = texture;
-                    this._updateMaterial(material);
+                if (material.getProperty('texture') !== texture) {
+                    material.setProperty('texture', texture);
+                    this.setMaterial(0, material);
                 }
-                else if (material !== this._material) {
-                    this._updateMaterial(material);
+                else if (material !== this.sharedMaterials[0]) {
+                    this.setMaterial(0, material);
                 }
+
                 if (this._renderData) {
                     this._renderData.material = material;
                 }
 
-                this.node._renderFlag |= RenderFlow.FLAG_COLOR;
                 this.markForUpdateRenderData(true);
                 this.markForRender(true);
             }
@@ -547,7 +557,7 @@ var Sprite = cc.Class({
             if (!this._enabled) return false;
         }
         else {
-            if (!this._enabled || !this._material) return false;
+            if (!this._enabled || !this.sharedMaterials[0] || !this.node._activeInHierarchy) return false;
         }
 
         let spriteFrame = this._spriteFrame;
@@ -600,7 +610,8 @@ var Sprite = cc.Class({
         }
 
         var spriteFrame = this._spriteFrame;
-        if (!spriteFrame || (this._material && this._material._texture) !== (spriteFrame && spriteFrame._texture)) {
+        let material = this.sharedMaterials[0];
+        if (!spriteFrame || (material && material._texture) !== (spriteFrame && spriteFrame._texture)) {
             // disable render flow until texture is loaded
             this.markForRender(false);
         }

@@ -1,7 +1,7 @@
 /****************************************************************************
  Copyright (c) 2017-2018 Chukong Technologies Inc.
 
- http://www.cocos.com
+ https://www.cocos.com/
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated engine source code (the "Software"), a limited,
@@ -23,15 +23,16 @@
  THE SOFTWARE.
  ****************************************************************************/
 
+import IARenderData from '../renderer/render-data/ia-render-data';
+ 
 const ParticleSystem = require('./CCParticleSystem');
 const renderer = require('../core/renderer/');
-const renderEngine = require('../core/renderer/render-engine');
 const vfmtPosUvColor = require('../core/renderer/webgl/vertex-format').vfmtPosUvColor;
 const QuadBuffer = require('../core/renderer/webgl/quad-buffer');
 
-var particleSystemAssembler = {
-    useModel: true,
+import InputAssembler from '../renderer/core/input-assembler';
 
+var particleSystemAssembler = {
     createIA (comp) {
         let device = renderer.device;
         // Vertex format defines vertex buffer layout: x, y, u, v color
@@ -40,7 +41,7 @@ var particleSystemAssembler = {
         // Create quad buffer for vertex and index
         comp._buffer = new QuadBuffer(renderer._handle, vfmtPosUvColor);
 
-        comp._ia = new renderEngine.InputAssembler();
+        comp._ia = new InputAssembler();
         comp._ia._vertexBuffer = comp._buffer._vb;
         comp._ia._indexBuffer = comp._buffer._ib;
         comp._ia._start = 0;
@@ -49,10 +50,10 @@ var particleSystemAssembler = {
 
     updateRenderData (comp) {
         if (!comp._renderData) {
-            comp._renderData = new renderEngine.IARenderData();
+            comp._renderData = new IARenderData();
             comp._renderData.ia = comp._ia;
         }
-        comp._renderData.material = comp._material;
+        comp._renderData.material = comp.sharedMaterials[0];
     },
 
     renderIA (comp, renderer) {

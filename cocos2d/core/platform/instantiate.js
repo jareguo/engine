@@ -2,7 +2,7 @@
  Copyright (c) 2013-2016 Chukong Technologies Inc.
  Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
 
- http://www.cocos.com
+ https://www.cocos.com/
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated engine source code (the "Software"), a limited,
@@ -29,6 +29,7 @@ var CCValueType = require('../value-types/value-type');
 var Destroyed = CCObject.Flags.Destroyed;
 var PersistentMask = CCObject.Flags.PersistentMask;
 var _isDomNode = require('./utils').isDomNode;
+var js = require('./js');
 
 /**
  * !#en Clones the object `original` and returns the clone, or instantiate a node from the Prefab.
@@ -183,7 +184,7 @@ function enumerateCCClass (klass, obj, clone, parent) {
 function enumerateObject (obj, clone, parent) {
     // 目前使用“_iN$t”这个特殊字段来存实例化后的对象，这样做主要是为了防止循环引用
     // 注意，为了避免循环引用，所有新创建的实例，必须在赋值前被设为源对象的_iN$t
-    obj._iN$t = clone;
+    js.value(obj, '_iN$t', clone, true);
     objsToClearTmpVar.push(obj);
     var klass = obj.constructor;
     if (cc.Class._isCCClass(klass)) {
@@ -231,7 +232,7 @@ function instantiateObj (obj, parent) {
     if (Array.isArray(obj)) {
         var len = obj.length;
         clone = new Array(len);
-        obj._iN$t = clone;
+        js.value(obj, '_iN$t', clone, true);
         for (var i = 0; i < len; ++i) {
             var value = obj[i];
             if (typeof value === 'object' && value) {

@@ -1,7 +1,7 @@
 /****************************************************************************
  Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
 
- http://www.cocos.com
+ https://www.cocos.com/
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated engine source code (the "Software"), a limited,
@@ -606,6 +606,10 @@ if (CC_DEBUG) {
         cc.warnID(1400, 'cc.KEY', 'cc.macro.KEY');
         return cc.macro.KEY;
     });
+    js.get(cc, 'Easing', function () {
+        cc.warnID(1400, 'cc.Easing', 'cc.easing');
+        return cc.easing;
+    });
 
     // cc.pool
     js.get(cc, 'pool', function () {
@@ -623,4 +627,20 @@ if (CC_DEBUG) {
     if (typeof dragonBones !== 'undefined') {
         js.obsolete(dragonBones.CCFactory, 'dragonBones.CCFactory.getFactory', 'getInstance');
     }
+
+    // renderEngine
+    cc.renderer.renderEngine = {
+        get gfx () {
+            cc.warnID(1400, 'cc.renderer.renderEngine.gfx', 'cc.gfx');
+            return cc.gfx;
+        },
+        get math () {
+            cc.warnID(1400, 'cc.renderer.renderEngine.math', 'cc.vmath');
+            return cc.vmath;
+        },
+        get InputAssembler () {
+            cc.warnID(1400, 'cc.renderer.renderEngine.InputAssembler', 'cc.renderer.InputAssembler');
+            return cc.renderer.InputAssembler;
+        }
+    };
 }

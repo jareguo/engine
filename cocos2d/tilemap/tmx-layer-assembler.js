@@ -1,7 +1,7 @@
 /****************************************************************************
  Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
 
- http://www.cocos.com
+ https://www.cocos.com/
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated engine source code (the "Software"), a limited,
@@ -26,7 +26,6 @@
 const TiledLayer = require('./CCTiledLayer');
 const TiledMap = require('./CCTiledMap');
 
-const renderEngine = require('../core/renderer/render-engine');
 const RenderFlow = require('../core/renderer/render-flow');
 
 const Orientation = TiledMap.Orientation;
@@ -35,9 +34,7 @@ const FLIPPED_MASK = TileFlag.FLIPPED_MASK;
 const StaggerAxis = TiledMap.StaggerAxis;
 const StaggerIndex = TiledMap.StaggerIndex;
 
-const math = renderEngine.math;
-const mat4 = math.mat4;
-const vec3 = math.vec3;
+import { mat4, vec3 } from '../core/vmath';
 
 let _mat4_temp = mat4.create();
 let _mat4_temp2 = mat4.create();
@@ -53,7 +50,7 @@ let tmxAssembler = {
         let size = comp.node._contentSize;
         let anchor = comp.node._anchorPoint;
         renderData.updateSizeNPivot(size.width, size.height, anchor.x, anchor.y);
-        renderData.material = comp.getMaterial();
+        renderData.material = comp.sharedMaterials[0];
         
         this.updateVertices(comp);
     },
@@ -63,16 +60,15 @@ let tmxAssembler = {
         let data = renderData._data;
 
         let buffer = renderer._meshBuffer,
-            vertexOffset = buffer.byteOffset >> 2,
             vertexCount = renderData.vertexCount;
-        
-        let indiceOffset = buffer.indiceOffset,
-            vertexId = buffer.vertexOffset;
             
-        buffer.request(vertexCount, renderData.indiceCount);
+        let offsetInfo = buffer.request(vertexCount, renderData.indiceCount);
 
         // buffer data may be realloc, need get reference after request.
-        let vbuf = buffer._vData,
+        let indiceOffset = offsetInfo.indiceOffset,
+            vertexOffset = offsetInfo.byteOffset >> 2,
+            vertexId = offsetInfo.vertexOffset,
+            vbuf = buffer._vData,
             ibuf = buffer._iData,
             uintbuf = buffer._uintVData;
         
@@ -149,7 +145,7 @@ let tmxAssembler = {
         let cullingA = a, cullingD = d,
             cullingMapx = tx, cullingMapy = ty,
             cullingW = w, cullingH = h;
-        let enabledCulling = cc.macro.ENABLE_TILEDMAP_CULLING;
+        let enabledCulling = !CC_EDITOR && cc.macro.ENABLE_TILEDMAP_CULLING;
         
         if (enabledCulling) {
             let camera = cc.Camera.findCamera(comp.node);

@@ -2,7 +2,7 @@
  Copyright (c) 2013-2016 Chukong Technologies Inc.
  Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
 
- http://www.cocos.com
+ https://www.cocos.com/
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated engine source code (the "Software"), a limited,
@@ -25,16 +25,17 @@
  ****************************************************************************/
 
 const misc = require('../utils/misc');
-const renderEngine = require('../renderer/render-engine');
-const math = renderEngine.math;
-const StencilMaterial = renderEngine.StencilMaterial;
+const Material = require('../assets/material/CCMaterial');
 const RenderComponent = require('./CCRenderComponent');
 const RenderFlow = require('../renderer/render-flow');
 const Graphics = require('../graphics/graphics');
 const Node = require('../CCNode');
+const dynamicAtlasManager = require('../renderer/utils/dynamic-atlas/manager');
+
+import { mat4, vec2 } from '../vmath';
 
 let _vec2_temp = cc.v2();
-let _mat4_temp = math.mat4.create();
+let _mat4_temp = mat4.create();
 
 let _circlepoints =[];
 function _calculateCircle (center, radius, segements) {
@@ -194,9 +195,9 @@ let Mask = cc.Class({
                     cc.warnID(4201);
                     return;
                 }
-                if (this._material) {
-                    this._material.alphaThreshold = this.alphaThreshold;
-                    this._material.updateHash();
+                let material = this.sharedMaterials[0];
+                if (material) {
+                    material.setProperty('alphaThreshold', this.alphaThreshold);
                 }
             }
         },
@@ -264,6 +265,9 @@ let Mask = cc.Class({
         if (this._type !== MaskType.IMAGE_STENCIL) {
             this._updateGraphics();
         }
+        else {
+            this._applySpriteFrame();
+        }
     },
 
     onEnable () {
@@ -273,6 +277,7 @@ let Mask = cc.Class({
                 // Do not render when sprite frame is not ready
                 this.markForRender(false);
                 if (this._spriteFrame) {
+                    this.markForUpdateRenderData(false);
                     this._spriteFrame.once('load', this._onTextureLoaded, this);
                     this._spriteFrame.ensureLoadTexture();
                 }
@@ -343,6 +348,9 @@ let Mask = cc.Class({
                 spriteFrame.ensureLoadTexture();
             }
         }
+        else {
+            this.disableRender();
+        }
     },
 
     _activateMaterial () {
@@ -355,24 +363,27 @@ let Mask = cc.Class({
         // WebGL
         if (cc.game.renderType !== cc.game.RENDER_TYPE_CANVAS) {
             // Init material
-            if (!this._material) {
-                this._material = new StencilMaterial();
+            let material = this.sharedMaterials[0];
+            if (!material) {
+                material = Material.getInstantiatedBuiltinMaterial('sprite', this);
+                material.define('USE_ALPHA_TEST', true);
             }
 
             // Reset material
             if (this._type === MaskType.IMAGE_STENCIL) {
                 let texture = this.spriteFrame.getTexture();
-                this._material.useModel = false;
-                this._material.useTexture = true;
-                this._material.useColor = true;
-                this._material.texture = texture;
-                this._material.alphaThreshold = this.alphaThreshold;
+                material.define('_USE_MODEL', false);
+                material.define('USE_TEXTURE', true);
+
+                material.setProperty('texture', texture);
+                material.setProperty('alphaThreshold', this.alphaThreshold);
             }
             else {
-                this._material.useModel = true;
-                this._material.useTexture = false;
-                this._material.useColor = false;
+                material.define('_USE_MODEL', true);
+                material.define('USE_TEXTURE', false);
             }
+
+            this.setMaterial(0, material);
         }
 
         this.markForRender(true);
@@ -452,19 +463,24 @@ let Mask = cc.Class({
             testPt = _vec2_temp;
         
         node._updateWorldMatrix();
-        math.mat4.invert(_mat4_temp, node._worldMatrix);
-        math.vec2.transformMat4(testPt, cameraPt, _mat4_temp);
+        mat4.invert(_mat4_temp, node._worldMatrix);
+        vec2.transformMat4(testPt, cameraPt, _mat4_temp);
         testPt.x += node._anchorPoint.x * w;
         testPt.y += node._anchorPoint.y * h;
 
+        let result = false;
         if (this.type === MaskType.RECT || this.type === MaskType.IMAGE_STENCIL) {
-            return testPt.x >= 0 && testPt.y >= 0 && testPt.x <= w && testPt.y <= h;
+            result = testPt.x >= 0 && testPt.y >= 0 && testPt.x <= w && testPt.y <= h;
         }
         else if (this.type === MaskType.ELLIPSE) {
             let rx = w / 2, ry = h / 2;
             let px = testPt.x - 0.5 * w, py = testPt.y - 0.5 * h;
-            return px * px / (rx * rx) + py * py / (ry * ry) < 1;
+            result = px * px / (rx * rx) + py * py / (ry * ry) < 1;
         }
+        if (this.inverted) {
+            result = !result;
+        }
+        return result;
     },
 
     markForUpdateRenderData (enable) {

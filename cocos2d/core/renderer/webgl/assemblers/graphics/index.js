@@ -1,7 +1,7 @@
 /****************************************************************************
  Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
 
- http://www.cocos.com
+ https://www.cocos.com/
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated engine source code (the "Software"), a limited,
@@ -63,7 +63,6 @@ function clamp (v, min, max) {
 }
 
 let graphicsAssembler = {
-    useModel: true,
     createImpl (graphics) {
         return new Impl(graphics);
     },
@@ -71,7 +70,7 @@ let graphicsAssembler = {
     updateRenderData (graphics) {
         let datas = graphics._impl.getRenderDatas();
         for (let i = 0, l = datas.length; i < l; i++) {
-            datas[i].material = graphics.getMaterial();
+            datas[i].material = graphics.sharedMaterials[0];
         }
     },
 
@@ -85,14 +84,6 @@ let graphicsAssembler = {
     },
 
     renderIA (graphics, renderer) {
-        let node = graphics.node;
-        
-        let nodeColor = node.color,
-            nodeR = nodeColor.r / 255,
-            nodeG = nodeColor.g / 255,
-            nodeB = nodeColor.b / 255,
-            nodeA = nodeColor.a / 255;
-
         let impl = graphics._impl;
         let renderDatas = impl.getRenderDatas();
         for (let index = 0, length = renderDatas.length; index < length; index++) {
@@ -123,7 +114,7 @@ let graphicsAssembler = {
                 renderDatas[_impl._dataOffset] = renderData;
             }
 
-            renderData.material = graphics.getMaterial();
+            renderData.material = graphics.sharedMaterials[0];
             meshbuffer = renderData.meshbuffer;
         }
 

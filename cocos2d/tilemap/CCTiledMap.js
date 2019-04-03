@@ -2,7 +2,7 @@
  Copyright (c) 2013-2016 Chukong Technologies Inc.
  Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
 
- http://www.cocos.com
+ https://www.cocos.com/
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated engine source code (the "Software"), a limited,
@@ -153,7 +153,7 @@ let TileFlag = cc.Enum({
      * @type {Number}
      * @static
      */
-    FLIPPED_MASK: (~((0x80000000 | 0x40000000 | 0x20000000) >>> 0)) >>> 0
+    FLIPPED_MASK: (~(0x80000000 | 0x40000000 | 0x20000000)) >>> 0
 });
 
 /*
@@ -465,11 +465,11 @@ let TiledMap = cc.Class({
             this._buildWithMapInfo(mapInfo);
         }
         else {
-            this._relseasMapInfo()
+            this._releaseMapInfo()
         }
     },
 
-    _relseasMapInfo () {
+    _releaseMapInfo () {
         // remove the layers & object groups added before
         let layers = this._layers;
         for (let i = 0, l = layers.length; i < l; i++) {
@@ -498,7 +498,7 @@ let TiledMap = cc.Class({
         this._properties = mapInfo.properties;
         this._tileProperties = mapInfo.getTileProperties();
 
-        this._relseasMapInfo();
+        this._releaseMapInfo();
 
         let layers = this._layers;
         let groups = this._groups;

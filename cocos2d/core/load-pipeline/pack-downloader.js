@@ -2,7 +2,7 @@
  Copyright (c) 2013-2016 Chukong Technologies Inc.
  Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
 
- http://www.cocos.com
+ https://www.cocos.com/
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated engine source code (the "Software"), a limited,
@@ -61,6 +61,7 @@ function error (uuid, packUuid) {
 module.exports = {
     initPacks: function (packs) {
         packIndices = packs;
+        uuidToPack = {};
         for (var packUuid in packs) {
             var uuids = packs[packUuid];
             for (var i = 0; i < uuids.length; i++) {

@@ -1,7 +1,7 @@
 /****************************************************************************
  Copyright (c) 2018 Xiamen Yaji Software Co., Ltd.
 
- http://www.cocos.com
+ https://www.cocos.com/
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated engine source code (the "Software"), a limited,
@@ -29,6 +29,11 @@ const FillType = Sprite.FillType;
 let simple = require('./simple');
 let sliced = require('./sliced');
 let tiled = require('./tiled');
+
+if (CC_TEST) {
+    // 2.x not support test with the canvas simple, in order to test in local test construct.
+    cc._Test._spriteWebGLAssembler = require('../../../webgl/assemblers/sprite/index.js');
+}
 
 module.exports = {
     getAssembler: function (sprite) {

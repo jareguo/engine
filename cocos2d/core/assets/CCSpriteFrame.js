@@ -194,6 +194,12 @@ let SpriteFrame = cc.Class(/** @lends cc.SpriteFrame# */{
 
         // the location of the sprite on rendering texture
         this._rect = null;
+        // uv data of frame
+        this.uv = [];
+        // texture of frame
+        this._texture = null;
+        // store original info before packed to dynamic atlas
+        this._original = null;
 
         // for trimming
         this._offset = null;
@@ -207,14 +213,9 @@ let SpriteFrame = cc.Class(/** @lends cc.SpriteFrame# */{
 
         this._capInsets = [0, 0, 0, 0];
 
-        this.uv = [];
         this.uvSliced = [];
 
-        this._texture = null;
         this._textureFilename = '';
-
-        // store original info before packed to dynamic atlas
-        this._original = null;
 
         if (CC_EDITOR) {
             // Atlas asset uuid
@@ -256,6 +257,8 @@ let SpriteFrame = cc.Class(/** @lends cc.SpriteFrame# */{
      */
     setRotated: function (bRotated) {
         this._rotated = bRotated;
+        if (this._texture)
+            this._calculateUV();
     },
 
     /**
@@ -276,8 +279,10 @@ let SpriteFrame = cc.Class(/** @lends cc.SpriteFrame# */{
      */
     setRect: function (rect) {
         this._rect = rect;
+        if (this._texture)
+            this._calculateUV();
     },
-
+    
     /**
      * !#en Returns the original size of the trimmed image.
      * !#zh 获取修剪前的原始大小
@@ -328,14 +333,14 @@ let SpriteFrame = cc.Class(/** @lends cc.SpriteFrame# */{
             self._rotated = false;
             w = self._texture.width;
             h = self._texture.height;
-            self.setRect(cc.rect(0, 0, w, h));
+            self._rect = cc.rect(0, 0, w, h);
         }
 
         if (self._rect) {
             self._checkRect(self._texture);
         }
         else {
-            self.setRect(cc.rect(0, 0, w, h));
+            self._rect = cc.rect(0, 0, w, h);
         }
 
         if (!self._originalSize) {
@@ -411,7 +416,7 @@ let SpriteFrame = cc.Class(/** @lends cc.SpriteFrame# */{
      */
     setTexture: function (textureOrTextureFile, rect, rotated, offset, originalSize) {
         if (rect) {
-            this.setRect(rect);
+            this._rect = rect;
         }
         else {
             this._rect = null;
@@ -578,6 +583,30 @@ let SpriteFrame = cc.Class(/** @lends cc.SpriteFrame# */{
         }
     },
 
+    _setDynamicAtlasFrame (frame) {
+        if (!frame) return;
+
+        this._original = {
+            _texture : this._texture,
+            _x : this._rect.x,
+            _y : this._rect.y
+        }
+        
+        this._texture = frame.texture;
+        this._rect.x = frame.x;
+        this._rect.y = frame.y;
+        this._calculateUV();
+    },
+
+    _resetDynamicAtlasFrame () {
+        if (!this._original) return;
+        this._rect.x = this._original._x;
+        this._rect.y = this._original._y;
+        this._texture = this._original._texture;
+        this._original = null;
+        this._calculateUV();
+    },
+
     _calculateUV () {
         let rect = this._rect,
             texture = this._texture,
@@ -675,7 +704,7 @@ let SpriteFrame = cc.Class(/** @lends cc.SpriteFrame# */{
     _deserialize: function (data, handle) {
         let rect = data.rect;
         if (rect) {
-            this.setRect(new cc.Rect(rect[0], rect[1], rect[2], rect[3]));
+            this._rect = new cc.Rect(rect[0], rect[1], rect[2], rect[3]);
         }
         if (data.offset) {
             this.setOffset(new cc.Vec2(data.offset[0], data.offset[1]));

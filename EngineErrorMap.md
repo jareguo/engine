@@ -174,7 +174,7 @@ loadScene: Unknown name type to load: '%s'
 
 ### 1208
 
-loadScene: Failed to load scene '%s' because '%s' is already loading
+loadScene: Failed to load scene '%s' because '%s' is already being loaded.
 
 ### 1209
 
@@ -242,7 +242,11 @@ The '%s' will be removed in v2.0, please use '%s' instead.
 
 ### 1407
 
-cc.pool is being removed from v2.0, you are getting cc.js.Pool instead
+cc.pool is being removed from v2.0, you are getting cc.js.Pool instead.
+
+### 1408
+
+'%s' is not support in the '%s', please use '%s' instead.
 
 ### 1500
 
@@ -276,7 +280,7 @@ warning: you CANNOT change update priority in scheduled function
 
 ### 1507
 
-CCScheduler#scheduleSelector. Selector already scheduled. Updating interval from: %.4f to %.4f
+CCScheduler#scheduleSelector. Selector already scheduled. Updating interval from: %s to %s"
 
 ### 1508
 

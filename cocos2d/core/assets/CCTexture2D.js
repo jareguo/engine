@@ -2,7 +2,7 @@
  Copyright (c) 2013-2016 Chukong Technologies Inc.
  Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
 
- http://www.cocos.com
+ https://www.cocos.com/
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated engine source code (the "Software"), a limited,
@@ -25,16 +25,17 @@
  ****************************************************************************/
 
 const EventTarget = require('../event/event-target');
-const renderEngine = require('../renderer/render-engine');
 const renderer = require('../renderer');
 require('../platform/CCClass');
-const gfx = renderEngine.gfx;
+
+import gfx from '../../renderer/gfx';
 
 const GL_NEAREST = 9728;                // gl.NEAREST
 const GL_LINEAR = 9729;                 // gl.LINEAR
 const GL_REPEAT = 10497;                // gl.REPEAT
 const GL_CLAMP_TO_EDGE = 33071;         // gl.CLAMP_TO_EDGE
 const GL_MIRRORED_REPEAT = 33648;       // gl.MIRRORED_REPEAT
+const GL_RGBA = 6408;                   // gl.RGBA
 
 const CHAR_CODE_0 = 48;    // '0'
 const CHAR_CODE_1 = 49;    // '1'
@@ -153,6 +154,36 @@ const PixelFormat = cc.Enum({
      * @type {Number}
      */
     RGBA_PVRTC_4BPPV1: gfx.TEXTURE_FMT_RGBA_PVRTC_4BPPV1,
+    /**
+     * rgb etc1
+     * @property RGB_ETC1
+     * @readonly
+     * @type {Number}
+     */
+    RGB_ETC1: gfx.TEXTURE_FMT_RGB_ETC1,
+    /**
+     * rgba etc1
+     * @property RGBA_ETC1
+     * @readonly
+     * @type {Number}
+     */
+    // gfx do not have a standard definition for RGBA_ETC1, need define a specified number for it.
+    RGBA_ETC1: 1024,
+
+    /**
+     * rgb etc2
+     * @property RGB_ETC2
+     * @readonly
+     * @type {Number}
+     */
+    RGB_ETC2: gfx.TEXTURE_FMT_RGB_ETC2,
+    /**
+     * rgba etc2
+     * @property RGBA_ETC2
+     * @readonly
+     * @type {Number}
+     */
+    RGBA_ETC2: gfx.TEXTURE_FMT_RGBA_ETC2,
 });
 
 /**
@@ -268,8 +299,9 @@ var Texture2D = cc.Class({
         _flipY: false,
         _minFilter: Filter.LINEAR,
         _magFilter: Filter.LINEAR,
+        _mipFilter: Filter.LINEAR,
         _wrapS: WrapMode.CLAMP_TO_EDGE,
-        _wrapT: WrapMode.CLAMP_TO_EDGE
+        _wrapT: WrapMode.CLAMP_TO_EDGE,
     },
 
     statics: {
@@ -279,11 +311,7 @@ var Texture2D = cc.Class({
         _FilterIndex: FilterIndex,
 
         // predefined most common extnames
-        extnames: ['.png', '.jpg', '.jpeg', '.bmp', '.webp', '.pvr', '.etc'],
-
-        _isCompressed (texture) {
-            return texture._format >= PixelFormat.RGB_PVRTC_2BPPV1 && texture._format <= PixelFormat.RGBA_PVRTC_4BPPV1;
-        }
+        extnames: ['.png', '.jpg', '.jpeg', '.bmp', '.webp', '.pvr', '.pkm'],
     },
 
     ctor () {
@@ -330,6 +358,8 @@ var Texture2D = cc.Class({
          */
         this.height = 0;
 
+        this._hashDirty = true;
+        this._hash = 0;
         this._texture = null;
         
         if (CC_EDITOR) {
@@ -340,7 +370,7 @@ var Texture2D = cc.Class({
     /**
      * !#en
      * Get renderer texture implementation object
-     * extended from renderEngine.TextureAsset
+     * extended from render.Texture2D
      * !#zh  返回渲染器内部贴图对象
      * @method getImpl
      */
@@ -387,6 +417,10 @@ var Texture2D = cc.Class({
                 this._magFilter = options.magFilter;
                 options.magFilter = FilterIndex[options.magFilter];
             }
+            if (options.mipFilter !== undefined) {
+                this._mipFilter = options.mipFilter;
+                options.mipFilter = FilterIndex[options.mipFilter];
+            }
             if (options.wrapS !== undefined) {
                 this._wrapS = options.wrapS;
             }
@@ -427,6 +461,8 @@ var Texture2D = cc.Class({
             if (options.images && options.images.length > 0) {
                 this._texture.update(options);
             }
+
+            this._hashDirty = true;
         }
     },
 
@@ -483,6 +519,9 @@ var Texture2D = cc.Class({
         opts.wrapS = this._wrapS;
         opts.wrapT = this._wrapT;
         opts.format = pixelFormat;
+        if (pixelFormat === PixelFormat.RGBA_ETC1) {
+            opts.format = PixelFormat.RGB_ETC1;
+        }
         opts.width = pixelsWidth;
         opts.height = pixelsHeight;
         if (!this._texture) {
@@ -584,6 +623,9 @@ var Texture2D = cc.Class({
         opts.height = this.height;
         opts.hasMipmap = this._hasMipmap;
         opts.format = this._format;
+        if (this._format === PixelFormat.RGBA_ETC1) {
+            opts.format = PixelFormat.RGB_ETC1;
+        }
         opts.premultiplyAlpha = this._premultiplyAlpha;
         opts.flipY = this._flipY;
         opts.minFilter = FilterIndex[this._minFilter];
@@ -603,11 +645,7 @@ var Texture2D = cc.Class({
         this.emit("load");
 
         if (cc.macro.CLEANUP_IMAGE_CACHE && this._image instanceof HTMLImageElement) {
-            // wechat game platform will cache image parsed data, 
-            // so image will consume much more memory than web, releasing it
-            this._image.src = "";
-            // Release image in loader cache
-            cc.loader.removeItem(this._image.id);
+            this._clearImage();
         }
     },
 
@@ -713,6 +751,33 @@ var Texture2D = cc.Class({
         }
     },
 
+    _getOpts() {
+        let opts = _getSharedOptions();
+        opts.width = this.width;
+        opts.height = this.height;
+        opts.mipmap = this._genMipmap;
+        opts.format = this._format;
+        opts.premultiplyAlpha = this._premultiplyAlpha;
+        opts.anisotropy = this._anisotropy;
+        opts.flipY = this._flipY;
+        opts.minFilter = FilterIndex[this._minFilter];
+        opts.magFilter = FilterIndex[this._magFilter];
+        opts.mipFilter = FilterIndex[this._mipFilter];
+        opts.wrapS = this._wrapS;
+        opts.wrapT = this._wrapT;
+        return opts;
+    },
+
+    _resetUnderlyingMipmaps(mipmapSources) {
+        const opts = this._getOpts();
+        opts.images = mipmapSources || [null];
+        if (!this._texture) {
+            this._texture = new renderer.Texture2D(renderer.device, opts);
+        } else {
+            this._texture.update(opts);
+        }
+    },
+
     // SERIALIZATION
 
     _serialize: (CC_EDITOR || CC_TEST) && function () {
@@ -749,9 +814,11 @@ var Texture2D = cc.Class({
     },
 
     _deserialize: function (data, handle) {
+        let device = cc.renderer.device;
+
         let fields = data.split(',');
         // decode extname
-        var extIdStr = fields[0];
+        let extIdStr = fields[0];
         if (extIdStr) {
             let extIds = extIdStr.split('_');
 
@@ -767,9 +834,23 @@ var Texture2D = cc.Class({
 
                 let index = SupportTextureFormats.indexOf(tmpExt);
                 if (index !== -1 && index < extId) {
+                    
+                    let tmpFormat = extFormat[1] ? parseInt(extFormat[1]) : this._format;
+
+                    // check whether or not support compressed texture
+                    if ( tmpExt === '.pvr' && !device.ext('WEBGL_compressed_texture_pvrtc')) {
+                        continue;
+                    }
+                    else if ((tmpFormat === PixelFormat.RGB_ETC1 || tmpFormat === PixelFormat.RGBA_ETC1) && !device.ext('WEBGL_compressed_texture_etc1')) {
+                        continue;
+                    }
+                    else if ((tmpFormat === PixelFormat.RGB_ETC2 || tmpFormat === PixelFormat.RGBA_ETC2) && !device.ext('WEBGL_compressed_texture_etc')) {
+                        continue;
+                    }
+
                     extId = index;
                     ext = tmpExt;
-                    format = extFormat[1] ? parseInt(extFormat[1]) : this._format;
+                    format = tmpFormat;
                 }
             }
 
@@ -797,6 +878,43 @@ var Texture2D = cc.Class({
             // decode premultiply alpha
             this._premultiplyAlpha = fields[5].charCodeAt(0) === CHAR_CODE_1;
         }
+    },
+
+    _getHash () {
+        if (!this._hashDirty) {
+            return this._hash;
+        }
+        let hasMipmap = this._hasMipmap ? 1 : 0;
+        let premultiplyAlpha = this._premultiplyAlpha ? 1 : 0;
+        let flipY = this._flipY ? 1 : 0;
+        let minFilter = this._minFilter === Filter.LINEAR ? 1 : 2;
+        let magFilter = this._magFilter === Filter.LINEAR ? 1 : 2;
+        let wrapS = this._wrapS === WrapMode.REPEAT ? 1 : (this._wrapS === WrapMode.CLAMP_TO_EDGE ? 2 : 3);
+        let wrapT = this._wrapT === WrapMode.REPEAT ? 1 : (this._wrapT === WrapMode.CLAMP_TO_EDGE ? 2 : 3);
+        let pixelFormat = this._format;
+        let image = this._image;
+        if (CC_JSB && image) {
+            if (image._glFormat !== GL_RGBA)
+                pixelFormat = 0;
+            premultiplyAlpha = image._premultiplyAlpha;
+        }
+
+        this._hash = Number(`${minFilter}${magFilter}${pixelFormat}${wrapS}${wrapT}${hasMipmap}${premultiplyAlpha}${flipY}`);
+        this._hashDirty = false;
+        return this._hash;
+    },
+
+    _isCompressed () {
+        return this._texture && this._texture._compressed;
+    },
+    
+    _clearImage () {
+        // wechat game platform will cache image parsed data, 
+        // so image will consume much more memory than web, releasing it
+        // Release image in loader cache
+        // native image element has not image.id, release by image.src.
+        cc.loader.removeItem(this._image.id || this._image.src);
+        this._image.src = "";
     }
 });
 

@@ -1,7 +1,7 @@
 /****************************************************************************
  Copyright (c) 2018 Xiamen Yaji Software Co., Ltd.
 
- http://www.cocos.com
+ https://www.cocos.com/
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated engine source code (the "Software"), a limited,
@@ -24,7 +24,6 @@
  ****************************************************************************/
 
 const utils = require('../utils');
-const simple = require('./simple');
 
 let renderer = {
     createData (sprite) {
@@ -50,7 +49,7 @@ let renderer = {
         // TODO: handle blend function
 
         // opacity
-        ctx.globalAlpha = node.opacity / 255;
+        utils.context.setGlobalAlpha(ctx, node.opacity / 255);
 
         let frame = sprite.spriteFrame;
         let rect = frame._rect;

@@ -23,10 +23,12 @@
  THE SOFTWARE.
  ****************************************************************************/
 
-const MeshResource = require('./CCMeshResource');
 const renderer = require('../renderer');
-const renderEngine = require('../renderer/render-engine');
-const gfx = renderEngine.gfx;
+const EventTarget = require('../event/event-target');
+
+import InputAssembler from '../../renderer/core/input-assembler';
+import gfx from '../../renderer/gfx';
+import { Primitive, VertexBundle } from './mesh-data';
 
 function applyColor (data, offset, value) {
     data[offset] = value._val;
@@ -55,17 +57,34 @@ function applyVec3 (data, offset, value) {
 let Mesh = cc.Class({
     name: 'cc.Mesh',
     extends: cc.Asset,
+    mixins: [EventTarget],
 
     properties: {
-        _resource: {
-            default: null,
-            type: MeshResource
+        _nativeAsset: {
+            override: true,
+            get () {
+                return this._buffer;
+            },
+            set (bin) {
+                this._buffer = ArrayBuffer.isView(bin) ? bin.buffer : bin;
+            }
         },
+
+        _vertexBundles: {
+            default: null,
+            type: VertexBundle
+        },
+        _primitives: {
+            default: null,
+            Primitive
+        },
+        _minPos: cc.v3(),
+        _maxPos: cc.v3(),
 
         /**
          * !#en Get ir set the sub meshes.
          * !#zh 设置或者获取子网格。
-         * @property {[renderEngine.InputAssembler]} subMeshes
+         * @property {[InputAssembler]} subMeshes
          */
         subMeshes: {
             get () {
@@ -82,18 +101,45 @@ let Mesh = cc.Class({
 
         this._ibs = [];
         this._vbs = [];
-
-        this._minPos = cc.v3();
-        this._maxPos = cc.v3();
-
-        this._resourceInited = false;
     },
 
-    _initResource () {
-        if (this._resourceInited || !this._resource) return;
-        this._resourceInited = true;
+    onLoad () {
+        this._subMeshes.length = 0;
 
-        this._resource.flush(this);
+        let primitives = this._primitives;
+        for (let i = 0; i < primitives.length; i++) {
+            let primitive = primitives[i];
+            
+            // ib
+            let ibrange = primitive.data;
+            let ibData = new Uint16Array(this._buffer, ibrange.offset, ibrange.length / 2);
+            let ibBuffer = new gfx.IndexBuffer(
+                renderer.device,
+                primitive.indexUnit,
+                gfx.USAGE_STATIC,
+                ibData,
+                ibData.length
+            );
+
+            // vb
+            let vertexBundle = this._vertexBundles[primitive.vertexBundleIndices[0]];
+            let vbRange = vertexBundle.data;
+            let gfxVFmt = new gfx.VertexFormat(vertexBundle.formats);
+            let vbData = new Uint8Array(this._buffer, vbRange.offset, vbRange.length);
+            let vbBuffer = new gfx.VertexBuffer(
+                renderer.device,
+                gfxVFmt,
+                gfx.USAGE_STATIC,
+                vbData,
+                vertexBundle.verticesCount
+            );
+
+            // create sub meshes
+            this._subMeshes.push(new InputAssembler(vbBuffer, ibBuffer));
+            this._ibs.push({ buffer: ibBuffer, data: ibData });
+            this._vbs.push({ buffer: vbBuffer, data: vbData });
+        }
+        
     },
 
     /**
@@ -123,6 +169,8 @@ let Mesh = cc.Class({
             data: data,
             dirty: true
         };
+
+        this.emit('init-format');
     },
 
     /**
@@ -130,12 +178,12 @@ let Mesh = cc.Class({
      * Set the vertex values.
      * !#zh 
      * 设置顶点数据
-     * @method setVertexes
+     * @method setVertices
      * @param {String} name - the attribute name, e.g. gfx.ATTR_POSITION
      * @param {[Vec2|Vec3|Color|Number]} values - the vertex values
      * @param {Number} [index] 
      */
-    setVertexes (name, values, index) {
+    setVertices (name, values, index) {
         index = index || 0;
         let vb = this._vbs[index];
 
@@ -235,7 +283,7 @@ let Mesh = cc.Class({
             };
 
             let vb = this._vbs[0];
-            this._subMeshes[index] = new renderEngine.InputAssembler(vb.buffer, buffer);
+            this._subMeshes[index] = new InputAssembler(vb.buffer, buffer);
         }
         else {
             ib.data = data;
@@ -283,6 +331,18 @@ let Mesh = cc.Class({
             vbs[i].buffer.destroy();
         }
         vbs.length = 0;
+    },
+
+    /**
+     * !#en Set mesh bounding box
+     * !#zh 设置网格的包围盒
+     * @method setBoundingBox
+     * @param {Vec3} min 
+     * @param {Vec3} max 
+     */
+    setBoundingBox (min, max) {
+        this._minPos = min;
+        this._maxPos = max;
     },
 
     destroy () {

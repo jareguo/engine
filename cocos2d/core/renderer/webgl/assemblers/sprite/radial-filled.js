@@ -1,7 +1,7 @@
 /****************************************************************************
  Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
 
- http://www.cocos.com
+ https://www.cocos.com/
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated engine source code (the "Software"), a limited,
@@ -22,8 +22,6 @@
  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  THE SOFTWARE.
  ****************************************************************************/
-
-const dynamicAtlasManager = require('../../../utils/dynamic-atlas/manager');
 
 const PI_2 = Math.PI * 2;
 
@@ -47,14 +45,7 @@ module.exports = {
         
         // TODO: Material API design and export from editor could affect the material activation process
         // need to update the logic here
-        if (frame) {
-            if (!frame._original && dynamicAtlasManager) {
-                dynamicAtlasManager.insertSpriteFrame(frame);
-            }
-            if (sprite._material._texture !== frame._texture) {
-                sprite._activateMaterial();
-            }
-        }
+        sprite._calDynamicAtlas();
 
         let renderData = sprite._renderData;
         if (renderData && frame) {
@@ -339,16 +330,16 @@ module.exports = {
             tx = matrix.m12, ty = matrix.m13;
 
         // buffer
-        let buffer = renderer._meshBuffer,
-            vertexOffset = buffer.byteOffset >> 2,
+        let buffer = renderer._meshBuffer;
+        
+        let offsetInfo = buffer.request(renderData.vertexCount, renderData.indiceCount);
+
+        let indiceOffset = offsetInfo.indiceOffset,
+            vertexOffset = offsetInfo.byteOffset >> 2,
+            vertexId = offsetInfo.vertexOffset,
+            ibuf = buffer._iData,
             vbuf = buffer._vData,
             uintbuf = buffer._uintVData;
-        
-        let ibuf = buffer._iData,
-            indiceOffset = buffer.indiceOffset,
-            vertexId = buffer.vertexOffset;
-            
-        buffer.request(renderData.vertexCount, renderData.indiceCount);
 
         let count = data.length;
         for (let i = 0; i < count; i++) {

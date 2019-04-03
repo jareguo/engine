@@ -2,7 +2,7 @@
  Copyright (c) 2013-2016 Chukong Technologies Inc.
  Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
 
- http://www.cocos.com
+ https://www.cocos.com/
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated engine source code (the "Software"), a limited,
@@ -124,9 +124,10 @@ const PVR_HEADER_WIDTH = 7;
 const PVR_HEADER_MIPMAPCOUNT = 11;
 const PVR_HEADER_METADATA = 12;
 
-function loadCompressedTex (item) {
+function loadPVRTex (item) {
+    let buffer = item.content instanceof ArrayBuffer ? item.content : item.content.buffer;
     // Get a view of the arrayBuffer that represents the DDS header.
-    let header = new Int32Array(item.content.buffer, 0, PVR_HEADER_LENGTH);
+    let header = new Int32Array(buffer, 0, PVR_HEADER_LENGTH);
 
     // Do some sanity checks to make sure this is a valid DDS file.
     if(header[PVR_HEADER_MAGIC] != PVR_MAGIC) {
@@ -136,9 +137,8 @@ function loadCompressedTex (item) {
     // Gather other basic metrics and a view of the raw the DXT data.
     let width = header[PVR_HEADER_WIDTH];
     let height = header[PVR_HEADER_HEIGHT];
-    let levels = header[PVR_HEADER_MIPMAPCOUNT];
     let dataOffset = header[PVR_HEADER_METADATA] + 52;
-    let pvrtcData = new Uint8Array(item.content.buffer, dataOffset);
+    let pvrtcData = new Uint8Array(buffer, dataOffset);
 
     let pvrAsset = {
         _data: pvrtcData,
@@ -149,6 +149,47 @@ function loadCompressedTex (item) {
     };
 
     return pvrAsset;
+}
+
+//===============//
+// ETC constants //
+//===============//
+
+const ETC_PKM_HEADER_SIZE = 16;
+
+const ETC_PKM_FORMAT_OFFSET = 6;
+const ETC_PKM_ENCODED_WIDTH_OFFSET = 8;
+const ETC_PKM_ENCODED_HEIGHT_OFFSET = 10;
+const ETC_PKM_WIDTH_OFFSET = 12;
+const ETC_PKM_HEIGHT_OFFSET = 14;
+
+const ETC1_RGB_NO_MIPMAPS   = 0;
+const ETC2_RGB_NO_MIPMAPS   = 1;
+const ETC2_RGBA_NO_MIPMAPS  = 3;
+
+
+function readBEUint16(header, offset) {
+    return (header[offset] << 8) | header[offset+1];
+}
+function loadPKMTex(item) {
+    let buffer = item.content instanceof ArrayBuffer ? item.content : item.content.buffer;
+    let header = new Uint8Array(buffer);
+    let format = readBEUint16(header, ETC_PKM_FORMAT_OFFSET);
+    if (format !== ETC1_RGB_NO_MIPMAPS && format !== ETC2_RGB_NO_MIPMAPS && format !== ETC2_RGBA_NO_MIPMAPS) {
+        return new Error("Invalid magic number in ETC header");
+    }
+    let width = readBEUint16(header, ETC_PKM_WIDTH_OFFSET);
+    let height = readBEUint16(header, ETC_PKM_HEIGHT_OFFSET);
+    let encodedWidth = readBEUint16(header, ETC_PKM_ENCODED_WIDTH_OFFSET);
+    let encodedHeight = readBEUint16(header, ETC_PKM_ENCODED_HEIGHT_OFFSET);
+    let etcData = new Uint8Array(buffer, ETC_PKM_HEADER_SIZE);
+    let etcAsset = {
+        _data: etcData,
+        _compressed: true,
+        width: width,
+        height: height
+    };
+    return etcAsset;
 }
 
 var defaultMap = {
@@ -162,8 +203,8 @@ var defaultMap = {
     'tiff' : loadImage,
     'webp' : loadImage,
     'image' : loadImage,
-    'pvr' : loadCompressedTex,
-    'etc' : loadCompressedTex,
+    'pvr' : loadPVRTex,
+    'pkm' : loadPKMTex,
 
     // Audio
     'mp3' : loadAudioAsAsset,
@@ -186,6 +227,8 @@ var defaultMap = {
 
     // binary
     'binary' : loadBinary,
+    'dbbin' : loadBinary,
+    'bin' : loadBinary,
 
     // Font
     'font' : fontLoader.loadFont,

@@ -2,7 +2,7 @@
  Copyright (c) 2013-2016 Chukong Technologies Inc.
  Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
 
- http://www.cocos.com
+ https://www.cocos.com/
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated engine source code (the "Software"), a limited,
@@ -207,7 +207,6 @@ let ScrollView = cc.Class({
             tooltip: CC_DEV && 'i18n:COMPONENT.scrollview.content',
             formerlySerializedAs: 'content',
             notify (oldValue) {
-                this._initView();
                 this._calculateBoundary();
             }
         },
@@ -778,7 +777,7 @@ let ScrollView = cc.Class({
 
         let deltaMove = cc.v2(0, 0);
         let wheelPrecision = -0.1;
-        if(CC_JSB) {
+        if(CC_JSB || CC_RUNTIME) {
             wheelPrecision = -7;
         }
         if(this.vertical) {
@@ -903,22 +902,17 @@ let ScrollView = cc.Class({
             }
             let viewSize = this._view.getContentSize();
 
-            let leftBottomPosition = this._convertToContentParentSpace(cc.v2(0, 0));
-            this._leftBoundary = leftBottomPosition.x;
-            this._bottomBoundary = leftBottomPosition.y;
+            let anchorX = viewSize.width * this._view.anchorX;
+            let anchorY = viewSize.height * this._view.anchorY;
 
-            let topRightPosition = this._convertToContentParentSpace(cc.v2(viewSize.width, viewSize.height));
-            this._rightBoundary = topRightPosition.x;
-            this._topBoundary = topRightPosition.y;
+            this._leftBoundary = -anchorX;
+            this._bottomBoundary = -anchorY;
+
+            this._rightBoundary = this._leftBoundary + viewSize.width;
+            this._topBoundary = this._bottomBoundary + viewSize.height;
 
             this._moveContentToTopLeft(viewSize);
         }
-    },
-
-    _convertToContentParentSpace (position) {
-        let contentParent = this._view;
-        let viewPositionInWorldSpace = contentParent.convertToWorldSpace(position);
-        return contentParent.convertToNodeSpaceAR(viewPositionInWorldSpace);
     },
 
     //this is for nested scrollview
@@ -1525,8 +1519,6 @@ let ScrollView = cc.Class({
     onDisable () {
         if (!CC_EDITOR) {
             this._unregisterEvent();
-            this.node.off(NodeEvent.SIZE_CHANGED, this._calculateBoundary, this);
-            this.node.off(NodeEvent.SCALE_CHANGED, this._calculateBoundary, this);
             if (this.content) {
                 this.content.off(NodeEvent.SIZE_CHANGED, this._calculateBoundary, this);
                 this.content.off(NodeEvent.SCALE_CHANGED, this._calculateBoundary, this);
@@ -1544,8 +1536,6 @@ let ScrollView = cc.Class({
     onEnable () {
         if (!CC_EDITOR) {
             this._registerEvent();
-            this.node.on(NodeEvent.SIZE_CHANGED, this._calculateBoundary, this);
-            this.node.on(NodeEvent.SCALE_CHANGED, this._calculateBoundary, this);
             if (this.content) {
                 this.content.on(NodeEvent.SIZE_CHANGED, this._calculateBoundary, this);
                 this.content.on(NodeEvent.SCALE_CHANGED, this._calculateBoundary, this);

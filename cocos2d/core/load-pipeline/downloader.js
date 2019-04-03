@@ -1,7 +1,7 @@
 /****************************************************************************
  Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
 
- http://www.cocos.com
+ https://www.cocos.com/
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated engine source code (the "Software"), a limited,
@@ -149,7 +149,7 @@ var defaultMap = {
     'webp' : downloadWebp,
     'image' : downloadImage,
     'pvr': downloadBinary,
-    'etc': downloadBinary,
+    'pkm': downloadBinary,
 
     // Audio
     'mp3' : downloadAudio,
@@ -186,7 +186,8 @@ var defaultMap = {
 
     // Binary
     'binary' : downloadBinary,
-    'bin': downloadBinary,
+    'bin' : downloadBinary,
+    'dbbin' : downloadBinary,
 
     'default' : downloadText
 };
@@ -304,7 +305,7 @@ Downloader.prototype.loadSubpackage = function (name, completeCallback) {
             if (completeCallback) completeCallback();
         }
         else {
-            downloadScript({url: pac.path}, function (err) {
+            downloadScript({url: pac.path + 'index.js'}, function (err) {
                 if (!err) {
                     pac.loaded = true;
                 }

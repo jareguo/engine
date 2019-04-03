@@ -1,7 +1,7 @@
 /****************************************************************************
  Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
 
- http://www.cocos.com
+ https://www.cocos.com/
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated engine source code (the "Software"), a limited,
@@ -556,7 +556,7 @@ module.exports = {
             if (letterInfo._valid) {
                 let letterDef = letterDefinitions[letterInfo._char];
 
-                let px = letterInfo._positionX + letterDef._width / 2 * _bmfontScale;
+                let px = letterInfo._positionX + letterDef._width * _bmfontScale;
                 let lineIndex = letterInfo._lineIndex;
                 if (_labelWidth > 0) {
                     if (!_isWrapText) {

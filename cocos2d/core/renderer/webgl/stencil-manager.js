@@ -1,7 +1,7 @@
 /****************************************************************************
  Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
 
- http://www.cocos.com
+ https://www.cocos.com/
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated engine source code (the "Software"), a limited,
@@ -23,8 +23,7 @@
  THE SOFTWARE.
  ****************************************************************************/
 
-const renderEngine = require('../render-engine');
-const gfx = renderEngine.gfx;
+import gfx from '../../../renderer/gfx';
 
 // Stage types
 var Stage = cc.Enum({
@@ -59,14 +58,13 @@ StencilManager.prototype = {
     },
 
     handleEffect (effect) {
-        let technique = effect.getTechnique('transparent');
+        let technique = effect.getDefaultTechnique();
         let passes = technique.passes;
         if (this.stage === Stage.DISABLED) {
-            this.stage = Stage.DISABLED;
             for (let i = 0; i < passes.length; ++i) {
                 let pass = passes[i];
                 if (pass._stencilTest) {
-                    pass.disableStencilTest();
+                    pass._stencilTest = false;
                 }
             }
             return effect;
@@ -106,8 +104,8 @@ StencilManager.prototype = {
         
         for (let i = 0; i < passes.length; ++i) {
             let pass = passes[i];
-            pass.setStencilFront(func, ref, stencilMask, failOp, zFailOp, zPassOp, writeMask);
-            pass.setStencilBack(func, ref, stencilMask, failOp, zFailOp, zPassOp, writeMask);
+            pass.setStencilFront(true, func, ref, stencilMask, failOp, zFailOp, zPassOp, writeMask);
+            pass.setStencilBack(true, func, ref, stencilMask, failOp, zFailOp, zPassOp, writeMask);
         }
         return effect;
     },
@@ -172,4 +170,4 @@ StencilManager.prototype = {
 StencilManager.sharedManager = new StencilManager();
 StencilManager.Stage = Stage;
 
-module.exports = StencilManager;
+module.exports = cc.StencilManager = StencilManager;

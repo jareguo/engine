@@ -2,7 +2,7 @@
  Copyright (c) 2013-2016 Chukong Technologies Inc.
  Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
 
- http://www.cocos.com
+ https://www.cocos.com/
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated engine source code (the "Software"), a limited,
@@ -24,10 +24,11 @@
  THE SOFTWARE.
  ****************************************************************************/
 
+import { vec2 } from '../vmath';
+
 const ValueType = require('./value-type');
 const js = require('../platform/js');
 const CCClass = require('../platform/CCClass');
-const math = require('../renderer/render-engine').math;
 const misc = require('../utils/misc');
 
 /**
@@ -68,6 +69,8 @@ CCClass.fastDefine('cc.Vec2', Vec2, { x: 0, y: 0 });
 
 var proto = Vec2.prototype;
 
+// compatible with vec3
+js.value(proto, 'z', 0);
 
 /**
  * !#en clone a Vec2 object
@@ -167,9 +170,9 @@ proto.lerp = function (to, ratio, out) {
  * @example
  * var min_inclusive = cc.v2(0, 0);
  * var max_inclusive = cc.v2(20, 20);
- * var v1 = cc.v2(20, 20).clamp(min_inclusive, max_inclusive); // Vec2 {x: 20, y: 20};
- * var v2 = cc.v2(0, 0).clamp(min_inclusive, max_inclusive);   // Vec2 {x: 0, y: 0};
- * var v3 = cc.v2(10, 10).clamp(min_inclusive, max_inclusive); // Vec2 {x: 10, y: 10};
+ * var v1 = cc.v2(20, 20).clampf(min_inclusive, max_inclusive); // Vec2 {x: 20, y: 20};
+ * var v2 = cc.v2(0, 0).clampf(min_inclusive, max_inclusive);   // Vec2 {x: 0, y: 0};
+ * var v3 = cc.v2(10, 10).clampf(min_inclusive, max_inclusive); // Vec2 {x: 10, y: 10};
  */
 proto.clampf = function (min_inclusive, max_inclusive) {
     this.x = misc.clampf(this.x, min_inclusive.x, max_inclusive.x);
@@ -589,7 +592,7 @@ proto.project = function (vector) {
  */
 proto.transformMat4 = function (m, out) {
     out = out || new Vec2();
-    math.vec2.transformMat4(out, this, m);
+    vec2.transformMat4(out, this, m);
 };
 
 //_serialize: function () {

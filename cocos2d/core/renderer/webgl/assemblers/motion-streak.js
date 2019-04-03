@@ -1,7 +1,7 @@
 /****************************************************************************
  Copyright (c) 2017-2018 Xiamen Yaji Software Co., Ltd.
 
- http://www.cocos.com
+ https://www.cocos.com/
 
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated engine source code (the "Software"), a limited,
@@ -84,7 +84,7 @@ var motionStreakAssembler = {
         let size = comp.node._contentSize;
         let anchor = comp.node._anchorPoint;
         renderData.updateSizeNPivot(size.width, size.height, anchor.x, anchor.y);
-        renderData.material = comp.getMaterial();
+        renderData.material = comp.sharedMaterials[0];
     },
 
     update (comp, dt) {
@@ -186,7 +186,7 @@ var motionStreakAssembler = {
         }
 
         renderData.vertexCount = renderData.dataLength;
-        renderData.indiceCount = renderData.vertexCount === 0 ? 0 : (renderData.vertexCount - 2)*3;
+        renderData.indiceCount = renderData.vertexCount <= 2 ? 0 : (renderData.vertexCount - 2)*3;
     },
 
     fillBuffers (comp, renderer) {
@@ -195,18 +195,17 @@ var motionStreakAssembler = {
             data = renderData._data;
 
         let buffer = renderer._meshBuffer,
-            vertexOffset = buffer.byteOffset >> 2,
             vertexCount = renderData.vertexCount;
         
-        let indiceOffset = buffer.indiceOffset,
-            vertexId = buffer.vertexOffset;
-        
-        buffer.request(vertexCount, renderData.indiceCount);
+        let offsetInfo = buffer.request(vertexCount, renderData.indiceCount);
 
         // buffer data may be realloc, need get reference after request.
-        let vbuf = buffer._vData,
-            ibuf = buffer._iData,
-            uintbuf = buffer._uintVData;
+        let indiceOffset = offsetInfo.indiceOffset,
+            vertexOffset = offsetInfo.byteOffset >> 2,
+            vertexId = offsetInfo.vertexOffset,
+            vbuf = buffer._vData,
+            uintbuf = buffer._uintVData,
+            ibuf = buffer._iData;
     
         // vertex buffer
         let vert;
