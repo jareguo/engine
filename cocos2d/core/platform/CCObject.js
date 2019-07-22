@@ -46,7 +46,7 @@ var IsEditorOnEnableCalled = 1 << 12;
 var IsPreloadStarted = 1 << 13;
 var IsOnLoadCalled = 1 << 14;
 var IsOnLoadStarted = 1 << 15;
-var IsStartCalled = 1 << 16;
+var IsStartStarted = 1 << 16;
 
 var IsRotationLocked = 1 << 17;
 var IsScaleLocked = 1 << 18;
@@ -57,7 +57,7 @@ var IsPositionLocked = 1 << 21;
 //var Hide = HideInGame | HideInHierarchy;
 // should not clone or serialize these flags
 var PersistentMask = ~(ToDestroy | Dirty | Destroying | DontDestroy | Deactivating |
-                       IsPreloadStarted | IsOnLoadStarted | IsOnLoadCalled | IsStartCalled |
+                       IsPreloadStarted | IsOnLoadStarted | IsOnLoadCalled | IsStartStarted |
                        IsOnEnableCalled | IsEditorOnEnableCalled |
                        IsRotationLocked | IsScaleLocked | IsAnchorLocked | IsSizeLocked | IsPositionLocked
                        /*RegisteredInEditor*/);
@@ -181,7 +181,7 @@ js.value(CCObject, 'Flags', {
     IsOnLoadStarted,
     IsOnLoadCalled,
     IsOnEnableCalled,
-    IsStartCalled,
+    IsStartStarted,
     IsEditorOnEnableCalled,
 
     IsPositionLocked,

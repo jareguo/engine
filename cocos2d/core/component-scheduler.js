@@ -28,20 +28,28 @@ require('./platform/CCClass');
 var Flags = require('./platform/CCObject').Flags;
 var jsArray = require('./platform/js').array;
 
-var IsStartCalled = Flags.IsStartCalled;
+var IsStartStarted = Flags.IsStartStarted;
 var IsOnEnableCalled = Flags.IsOnEnableCalled;
 var IsEditorOnEnableCalled = Flags.IsEditorOnEnableCalled;
 
 var callerFunctor = CC_EDITOR && require('./utils/misc').tryCatchFunctor_EDITOR;
 var callOnEnableInTryCatch = CC_EDITOR && callerFunctor('onEnable');
-var callStartInTryCatch = CC_EDITOR && callerFunctor('start', null, 'target._objFlags |= ' + IsStartCalled);
+var callStartInTryCatch = CC_EDITOR && function (target) {
+    target._objFlags |= IsStartStarted;
+    try {
+        target.start();
+    }
+    catch (e) {
+        cc._throw(e);
+    }
+};
 var callUpdateInTryCatch = CC_EDITOR && callerFunctor('update', 'dt');
 var callLateUpdateInTryCatch = CC_EDITOR && callerFunctor('lateUpdate', 'dt');
 var callOnDisableInTryCatch = CC_EDITOR && callerFunctor('onDisable');
 
-var callStart = CC_SUPPORT_JIT ? 'c.start();c._objFlags|=' + IsStartCalled : function (c) {
+var callStart = CC_SUPPORT_JIT ? `c._objFlags|=${IsStartStarted};c.start()` : function (c) {
+    c._objFlags |= IsStartStarted;
     c.start();
-    c._objFlags |= IsStartCalled;
 };
 var callUpdate = CC_SUPPORT_JIT ? 'c.update(dt)' : function (c, dt) {
     c.update(dt);
@@ -339,7 +347,7 @@ var ComponentScheduler = cc.Class({
         }
 
         // unschedule
-        if (comp.start && !(comp._objFlags & IsStartCalled)) {
+        if (comp.start && !(comp._objFlags & IsStartStarted)) {
             this.startInvoker.remove(comp);
         }
         if (comp.update) {
@@ -415,7 +423,7 @@ var ComponentScheduler = cc.Class({
     },
 
     _scheduleImmediate (comp) {
-        if (comp.start && !(comp._objFlags & IsStartCalled)) {
+        if (comp.start && !(comp._objFlags & IsStartStarted)) {
             this.startInvoker.add(comp);
         }
         if (comp.update) {
