@@ -956,12 +956,18 @@ export default function deserialize (data: IFileData, details: Details, options?
 
 deserialize.Details = Details;
 
-export function unpackJSONs (data: IPackedFileData, classFinder?: ClassFinder): IFileData[] {
-    if (data[File.Version] < SUPPORT_MIN_FORMAT_VERSION) {
-        throw new Error(cc.debug.getError(5304, data[File.Version]));
+export function unpackJSONs (data: IPackedFileData|IFileData[], classFinder?: ClassFinder): IFileData[] {
+    let ver = data[File.Version];
+    if (Array.isArray(ver)) {
+       // just array of independent jsons
+       return data as IFileData[];
     }
-    lookupClasses(data, true, classFinder);
-    cacheMasks(data);
+    if (ver < SUPPORT_MIN_FORMAT_VERSION) {
+        throw new Error(cc.debug.getError(5304, ver));
+    }
+
+    lookupClasses(data as IPackedFileData, true, classFinder);
+    cacheMasks(data as IPackedFileData);
 
     let version = { version: data[File.Version] };  // use an object to marked as preprocessed
     let sharedUuids = data[File.SharedUuids];

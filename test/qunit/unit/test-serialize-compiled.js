@@ -18,7 +18,7 @@ if (TestEditorExtends) { (function () {
                     return !(props && props[props.length - 1] === '_$erialized');
                 })) {
                     let writableJsons = JSON.parse(JSON.stringify(matchHistory.jsons));
-                    let packed = Editor.serializeCompiled.packJSONs(writableJsons);
+                    let packed = Editor.serializeCompiled._doPackJSONs(writableJsons);
                     let unpacked = unpackJSONs(packed, cc._MissingScript.safeFindClass);
 
                     for (let i = 0; i < unpacked.length; ++i) {
@@ -763,7 +763,7 @@ if (TestEditorExtends) { (function () {
     });
 
     function testPacked (objs, expected, info) {
-        let res = Editor.serializeCompiled.packJSONs(objs.map(serialize));
+        let res = Editor.serializeCompiled._doPackJSONs(objs.map(serialize));
         deepEqual(res, expected, info);
     }
 
