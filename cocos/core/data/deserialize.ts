@@ -820,11 +820,10 @@ function parseArray (data: IFileData, owner: any, key: string, value: IArrayData
 //     owner[key] = val;
 // }
 
-type IAssignments = {
-    [K in keyof DataTypes]?: ParseFunction<DataTypes[K]>;
-};
 
-const ASSIGNMENTS: IAssignments = new Array(DataTypeID.ARRAY_LENGTH) as {};
+const ASSIGNMENTS: {
+    [K in keyof DataTypes]?: ParseFunction<DataTypes[K]>;
+} = {} = new Array(DataTypeID.ARRAY_LENGTH) as {};
 ASSIGNMENTS[DataTypeID.SimpleType] = assignSimple;    // Only be used in the instances array
 ASSIGNMENTS[DataTypeID.InstanceRef] = assignInstanceRef;
 ASSIGNMENTS[DataTypeID.Array_InstanceRef] = genArrayParser(assignInstanceRef);
