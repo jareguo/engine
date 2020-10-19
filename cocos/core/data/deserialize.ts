@@ -43,9 +43,17 @@ import { deserializeDynamic } from './deserialize-dynamic';
 const SUPPORT_MIN_FORMAT_VERSION = 1;
 const EMPTY_PLACEHOLDER = 0;
 
-// Used for Data.ValueType.
-// If a value type is not registered in this list, it will be serialized to Data.Class.
-const BuiltinValueTypes: (typeof ValueType)[] = [
+/**
+ * Map `[A, B, ...]` to `[Constructor<A>, Constructor<B>, ...]`.
+ */
+type TupleConstructors<T> = { [K in keyof T]: Constructor<T[K]>; };
+
+/**
+ * Map `[A, B, ...]` to `A | B | ...`.
+ */
+type TupleDisjunction<T> = T[keyof Omit<T, keyof unknown[]>];
+
+type BuiltinValueTypeTuple = [
     Vec2,   // 0
     Vec3,   // 1
     Vec4,   // 2
@@ -56,14 +64,43 @@ const BuiltinValueTypes: (typeof ValueType)[] = [
     Mat4,   // 7
 ];
 
+type IBuiltinValueTypes = TupleConstructors<BuiltinValueTypeTuple>;
+
+// Used for Data.ValueType.
+// If a value type is not registered in this list, it will be serialized to Data.Class.
+const BuiltinValueTypes: IBuiltinValueTypes = [
+    Vec2,   // 0
+    Vec3,   // 1
+    Vec4,   // 2
+    Quat,   // 3
+    Color,  // 4
+    Size,   // 5
+    Rect,   // 6
+    Mat4,   // 7
+];
+
+type BuiltinValueTypeListMapIndex = number;
+
+type IBuiltinValueTypeConstructor = TupleDisjunction<IBuiltinValueTypes>;
+
+/**
+ * Map `Vec4` => `(v: Vec4, data: number[]) => void`;
+ */
+type IBuiltinValueTypeSetter<T> = (v: T, data: number[]) => void;
+
+type IBuiltinValueTypeSettersHelper<T> = { [K in keyof T]: IBuiltinValueTypeSetter<T[K]>; };
+
+type IBuiltinValueTypeSetters = IBuiltinValueTypeSettersHelper<BuiltinValueTypeTuple>;
+
 // Used for Data.ValueTypeCreated.
-function BuiltinValueTypeParsers_xyzw (obj: Vec4, data: number[]) {
+function BuiltinValueTypeParsers_xyzw (obj: Vec4 | Quat, data: number[]) {
     obj.x = data[1];
     obj.y = data[2];
     obj.z = data[3];
     obj.w = data[4];
 }
-const BuiltinValueTypeSetters: ((obj: ValueType, data: number[]) => void)[] = [
+
+const BuiltinValueTypeSetters: IBuiltinValueTypeSetters = [
     (obj: Vec2, data: number[]) => {
         obj.x = data[1];
         obj.y = data[2];
@@ -94,7 +131,7 @@ const BuiltinValueTypeSetters: ((obj: ValueType, data: number[]) => void)[] = [
 ];
 
 function serializeBuiltinValueTypes (obj: ValueType): IValueTypeData | null {
-    const ctor = obj.constructor as typeof ValueType;
+    const ctor = obj.constructor as IBuiltinValueTypeConstructor;
     const typeId = BuiltinValueTypes.indexOf(ctor);
     switch (ctor) {
         case Vec2:
@@ -255,7 +292,7 @@ export declare namespace deserialize.Internal {
     export type DataTypes_ = DataTypes;
 }
 
-type DataTypes = {
+interface DataTypes {
     [DataTypeID.SimpleType]: number | string | boolean | null | object;
     [DataTypeID.InstanceRef]: InstanceBnotReverseIndex;
     [DataTypeID.Array_InstanceRef]: DataTypes[DataTypeID.InstanceRef][];
@@ -270,7 +307,7 @@ type DataTypes = {
     [DataTypeID.CustomizedClass]: ICustomObjectData;
     [DataTypeID.Dict]: IDictData;
     [DataTypeID.Array]: IArrayData;
-};
+}
 
 type PrimitiveObjectTypeID = (
     DataTypeID.SimpleType | // SimpleType also includes any pure JSON object
@@ -281,7 +318,7 @@ type PrimitiveObjectTypeID = (
     DataTypeID.Dict
 );
 
-type AdvancedTypeID = Exclude<DataTypeID, DataTypeID.SimpleType>
+type AdvancedTypeID = Exclude<DataTypeID, DataTypeID.SimpleType>;
 
 
 // Collection of all data types
@@ -363,7 +400,7 @@ interface ICustomObjectData extends Array<any> {
 const VALUETYPE_SETTER = 0;
 type IValueTypeData = [
     // Predefined parsing function index
-    number,
+    BuiltinValueTypeListMapIndex,
     // Starting with 1, the corresponding value in the attributes are followed in order
     ...number[]
 ];
@@ -485,7 +522,7 @@ interface IFileData extends Array<any> {
 }
 
 // type Body = Pick<IFileData, File.Instances | File.InstanceTypes | File.Refs | File.DependObjs | File.DependKeys | File.DependUuidIndices>
-type Shared = Pick<IFileData, File.Version | File.SharedUuids | File.SharedStrings | File.SharedClasses | File.SharedMasks>
+type Shared = Pick<IFileData, File.Version | File.SharedUuids | File.SharedStrings | File.SharedClasses | File.SharedMasks>;
 const PACKED_SECTIONS = File.Instances;
 interface IPackedFileData extends Shared {
     [PACKED_SECTIONS]: IFileData[];
@@ -692,7 +729,7 @@ function deserializeCustomCCObject (data: IFileData, ctor: Ctor<ICustomClass>, v
 
 // Parse Functions
 
-type ParseFunction = (data: IFileData, owner: any, key: string, value: AnyData) => void;
+type ParseFunction<T> = (data: IFileData, owner: any, key: string, value: T) => void;
 
 function assignSimple (data: IFileData, owner: any, key: string, value: DataTypes[DataTypeID.SimpleType]) {
     owner[key] = value;
@@ -707,7 +744,7 @@ function assignInstanceRef (data: IFileData, owner: any, key: string, value: Ins
     }
 }
 
-function genArrayParser (parser: ParseFunction): ParseFunction {
+function genArrayParser<T> (parser: ParseFunction<T>): ParseFunction<T[]> {
     return (data: IFileData, owner: any, key: string, value: any[]) => {
         owner[key] = value;
         for (let i = 0; i < value.length; ++i) {
@@ -737,7 +774,7 @@ function parseValueTypeCreated (data: IFileData, owner: any, key: string, value:
 
 function parseValueType (data: IFileData, owner: any, key: string, value: IValueTypeData) {
     const val: ValueType = new BuiltinValueTypes[value[VALUETYPE_SETTER]]();
-    BuiltinValueTypeSetters[value[VALUETYPE_SETTER]](val, value);
+    BuiltinValueTypeSetters[value[VALUETYPE_SETTER]](val as any, value);
     owner[key] = val;
 }
 
@@ -783,7 +820,11 @@ function parseArray (data: IFileData, owner: any, key: string, value: IArrayData
 //     owner[key] = val;
 // }
 
-const ASSIGNMENTS = new Array<ParseFunction>(DataTypeID.ARRAY_LENGTH);
+type IAssignments = {
+    [K in keyof DataTypes]?: ParseFunction<DataTypes[K]>;
+};
+
+const ASSIGNMENTS: IAssignments = new Array(DataTypeID.ARRAY_LENGTH) as {};
 ASSIGNMENTS[DataTypeID.SimpleType] = assignSimple;    // Only be used in the instances array
 ASSIGNMENTS[DataTypeID.InstanceRef] = assignInstanceRef;
 ASSIGNMENTS[DataTypeID.Array_InstanceRef] = genArrayParser(assignInstanceRef);
