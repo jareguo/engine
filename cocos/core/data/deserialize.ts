@@ -49,9 +49,14 @@ const EMPTY_PLACEHOLDER = 0;
 type TupleConstructors<T> = { [K in keyof T]: Constructor<T[K]>; };
 
 /**
+ * Get tuple indices such as `'0' | '1' | ...`.
+ */
+type OnlyIndices<T> = keyof Omit<T, keyof unknown[]>;
+
+/**
  * Map `[A, B, ...]` to `A | B | ...`.
  */
-type TupleDisjunction<T> = T[keyof Omit<T, keyof unknown[]>];
+type TupleDisjunction<T> = T[OnlyIndices<T>];
 
 type BuiltinValueTypeTuple = [
     Vec2,   // 0
